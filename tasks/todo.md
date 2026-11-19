@@ -37,7 +37,7 @@ Verification commands: `npm test`, `npm run typecheck`, `npm run lint`, `npm run
 
 ## Phase: Thin round (gate 1)
 
-- [ ] Task 5: Identity, create room, return link (M)
+- [x] Task 5: Identity, create room, return link (M)
   - Acceptance: an organizer creates a room and gets an invite link and a return link. The return
     link opens the same identity in a second browser. The cookie is signed and HTTP-only.
   - Verify: integration tests (cookie tamper is refused, return secret is stored as a hash); browser run.
