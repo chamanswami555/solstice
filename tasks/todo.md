@@ -6,7 +6,7 @@ Verification commands: `npm test`, `npm run typecheck`, `npm run lint`, `npm run
 
 ## Phase: Foundation
 
-- [ ] Task 1: Application skeleton and config guard (S)
+- [x] Task 1: Application skeleton and config guard (S)
   - Acceptance: the application starts and shows a static first screen. `GET /api/health` answers
     `ok`. The server refuses to start when a required secret is missing or is a placeholder.
   - Verify: unit test of the config guard; build; the first screen in a browser engine.
@@ -26,7 +26,7 @@ Verification commands: `npm test`, `npm run typecheck`, `npm run lint`, `npm run
   - Verify: integration tests on a separate test database, one for each constraint.
   - Dependencies: 1. Files: `db/migrate.mjs`, `db/migrations/001_init.sql`, `lib/db.ts`, `tests/schema.test.ts`.
 
-- [ ] Task 4: Design direction and shared interface shell (S)
+- [x] Task 4: Design direction and shared interface shell (S)
   - Acceptance: one design direction, shared tokens (colour, type, spacing), a page shell and the
     form and button components. Text contrast is 4.5 to 1 or more, computed.
   - Verify: the design lint check; a browser engine render at phone width and desktop width.
