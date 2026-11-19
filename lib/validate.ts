@@ -37,6 +37,18 @@ function exchangeDateError(value: unknown, now: Date): string | null {
   return null;
 }
 
+function displayNameError(displayName: string | null): string | null {
+  if (!displayName) return "Enter the name your group knows you by.";
+  if (displayName.length > LIMITS.displayNameMax) return `Use ${LIMITS.displayNameMax} characters or fewer.`;
+  return null;
+}
+
+export function parseJoin(body: unknown): Parsed<{ displayName: string }> {
+  const displayName = textOf((body as { displayName?: unknown } | null)?.displayName);
+  const nameError = displayNameError(displayName);
+  return nameError ? { ok: false, fields: { displayName: nameError } } : { ok: true, value: { displayName: displayName! } };
+}
+
 export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<CreateRoomInput> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return { ok: false, fields: { form: "Send the room details as one object." } };
@@ -49,10 +61,8 @@ export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<C
   else if (roomName.length > LIMITS.roomNameMax) fields.roomName = `Use ${LIMITS.roomNameMax} characters or fewer.`;
 
   const displayName = textOf(input.displayName);
-  if (!displayName) fields.displayName = "Enter the name your group knows you by.";
-  else if (displayName.length > LIMITS.displayNameMax) {
-    fields.displayName = `Use ${LIMITS.displayNameMax} characters or fewer.`;
-  }
+  const nameError = displayNameError(displayName);
+  if (nameError) fields.displayName = nameError;
 
   const kind = input.kind === "december" || input.kind === "tonight" ? input.kind : null;
   if (!kind) fields.kind = "Pick a kind of room.";

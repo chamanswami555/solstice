@@ -3,17 +3,28 @@
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
+import { JoinForm } from "@/components/join-form";
 import { Notice } from "@/components/ui/notice";
 import type { RoomState } from "@/lib/rooms";
 
 const RELOAD_MS = 10_000;
 
-type View = { status: "loading" } | { status: "ready"; state: RoomState } | { status: "outside" } | { status: "failed" };
+type View =
+  | { status: "loading" }
+  | { status: "ready"; state: RoomState }
+  | { status: "outside"; roomName: string }
+  | { status: "missing" }
+  | { status: "failed" };
 
+/** A member gets the room. A person outside gets the name of the room, to join it. */
 async function loadState(code: string): Promise<View> {
   const response = await fetch(`/api/rooms/${code}/state`, { cache: "no-store" });
   if (response.ok) return { status: "ready", state: await response.json() };
-  return { status: response.status === 401 || response.status === 404 ? "outside" : "failed" };
+  if (response.status !== 401 && response.status !== 404) return { status: "failed" };
+
+  const door = await fetch(`/api/rooms/${code}`, { cache: "no-store" });
+  if (door.ok) return { status: "outside", roomName: (await door.json()).room.name };
+  return { status: door.status === 404 ? "missing" : "failed" };
 }
 
 /** Takes the return secret out of the address bar, so a shared address never carries it. */
@@ -72,11 +83,28 @@ export function Room() {
   if (view.status === "failed") {
     return <Notice tone="error">The room did not load. Check your connection. The page tries again every 10 seconds.</Notice>;
   }
+  if (view.status === "missing") {
+    return (
+      <div className="room">
+        <h1 className="room__title">This room does not exist</h1>
+        <p className="lead">Check the invite link, or ask your organizer for a new one.</p>
+      </div>
+    );
+  }
   if (view.status === "outside") {
     return (
       <div className="room">
-        <h1 className="room__title">This room is not open to you</h1>
-        <p className="lead">The room does not exist, or you are not in it. Ask your organizer for the invite link.</p>
+        <div className="room__head">
+          <h1 className="room__title">{view.roomName}</h1>
+          <p className="room__meta">You are invited to this secret gift exchange.</p>
+        </div>
+        <JoinForm
+          code={code}
+          onJoined={(secret) => {
+            if (secret) setReturnLink(`${window.location.origin}/r/${code}#k=${secret}`);
+            void reload();
+          }}
+        />
       </div>
     );
   }
@@ -120,7 +148,9 @@ export function Room() {
             <li className="members__row" key={member.displayName}>
               <span>{member.displayName}</span>
               <span className="members__tag">
-                {[member.isOrganizer && "organizer", member.displayName === me.displayName && "you"].filter(Boolean).join(", ")}
+                {[member.isOrganizer && "organizer", member.role === "guest" && "guest", member.displayName === me.displayName && "you"]
+                  .filter(Boolean)
+                  .join(", ")}
               </span>
             </li>
           ))}

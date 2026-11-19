@@ -1,4 +1,5 @@
 /** One shape for every error answer, and one safe way to read a JSON body. */
+import { RoomError, type RoomErrorCode } from "@/lib/errors";
 import type { FieldErrors } from "@/lib/validate";
 
 export type ApiError = { error: { code: string; message: string; fields?: FieldErrors } };
@@ -29,8 +30,19 @@ export async function readJson(request: Request): Promise<{ ok: true; body: unkn
   }
 }
 
-/** Logs the cause on the server and tells the browser nothing about it. */
+const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
+  ROOM_NOT_FOUND: 404,
+  ROOM_FULL: 409,
+  NAME_TAKEN: 409,
+  IDENTITY_CAP: 503,
+};
+
+/** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */
 export function serverError(error: unknown): Response {
+  if (error instanceof RoomError) {
+    const fields = error.code === "NAME_TAKEN" ? { displayName: error.message } : undefined;
+    return fail(REFUSAL_STATUS[error.code], error.code, error.message, fields);
+  }
   console.error(error);
   return fail(500, "SERVER_ERROR", "Something went wrong on our side. Try again.");
 }

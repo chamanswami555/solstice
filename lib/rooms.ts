@@ -1,7 +1,9 @@
 import type pg from "pg";
 import { getPool, inTransaction } from "@/lib/db";
+import { RoomError } from "@/lib/errors";
 import { newRoomCode } from "@/lib/identity";
-import { ensurePerson } from "@/lib/people";
+import { LIMITS } from "@/lib/limits";
+import { ensurePerson, type Person } from "@/lib/people";
 import type { CreateRoomInput, RoomKind } from "@/lib/validate";
 
 export type CreatedRoom = {
@@ -17,9 +19,14 @@ export type CreatedRoom = {
  */
 export type RoomState = {
   room: { code: string; name: string; kind: RoomKind; exchangeDate: string | null; budget: string | null };
-  me: { displayName: string; isOrganizer: boolean };
-  members: { displayName: string; isOrganizer: boolean }[];
+  me: RoomMember;
+  members: RoomMember[];
 };
+
+/** A guest joined after the draw: room talk and the reveal, and no pair. */
+export type RoomMember = { displayName: string; isOrganizer: boolean; role: "member" | "guest" };
+
+export { RoomError };
 
 /** One action, one transaction: the person, the room and the organizer's membership commit together. */
 export async function createRoom(
@@ -48,7 +55,7 @@ export async function createRoom(
 export async function getRoomState(code: string, personId: string, pool: pg.Pool = getPool()): Promise<RoomState | null> {
   const rows = await pool.query(
     `select r.code, r.name, r.kind, to_char(r.exchange_date, 'YYYY-MM-DD') as exchange_date, r.budget,
-            m.display_name, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me
+            m.display_name, m.role, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me
        from rooms r
        join members m on m.room_id = r.id
       where r.code = $1
@@ -59,13 +66,67 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
   const mine = rows.rows.find((row) => row.is_me);
   if (!mine) return null;
 
-  const member = (row: { display_name: string; is_organizer: boolean }) => ({
+  const member = (row: { display_name: string; is_organizer: boolean; role: RoomMember["role"] }): RoomMember => ({
     displayName: row.display_name,
     isOrganizer: row.is_organizer,
+    role: row.role,
   });
   return {
     room: { code: mine.code, name: mine.name, kind: mine.kind, exchangeDate: mine.exchange_date, budget: mine.budget },
     me: member(mine),
     members: rows.rows.map(member),
   };
+}
+
+/** What a person outside the room may see: enough to know that the invite link is the right one. */
+export async function getRoomDoor(code: string, pool: pg.Pool = getPool()): Promise<{ code: string; name: string } | null> {
+  const found = await pool.query("select code, name from rooms where code = $1", [code]);
+  return found.rows[0] ?? null;
+}
+
+/**
+ * Adds the person to the room. The row lock on the room is the same lock that the draw takes, so
+ * a join cannot land inside a draw, and two joins cannot both take the last place.
+ */
+export async function joinRoom(
+  code: string,
+  displayName: string,
+  cookiePersonId: string | null,
+  pool: pg.Pool = getPool(),
+): Promise<Person> {
+  return inTransaction(async (db) => {
+    const room = await db.query("select id from rooms where code = $1 for update", [code]);
+    if (room.rowCount === 0) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
+    const roomId = room.rows[0].id;
+
+    if (cookiePersonId) {
+      const already = await db.query("select 1 from members where room_id = $1 and person_id = $2", [roomId, cookiePersonId]);
+      if (already.rowCount === 1) return { personId: cookiePersonId, returnSecret: null };
+    }
+
+    const facts = await db.query(
+      `select (select count(*)::int from members where room_id = $1) as people,
+              exists (select 1 from draws where room_id = $1) as drawn`,
+      [roomId],
+    );
+    if (facts.rows[0].people >= LIMITS.roomPeopleMax) {
+      throw new RoomError("ROOM_FULL", `This room is full. A room holds ${LIMITS.roomPeopleMax} people.`);
+    }
+
+    const person = await ensurePerson(cookiePersonId, db);
+    try {
+      await db.query("insert into members (room_id, person_id, display_name, role) values ($1, $2, $3, $4)", [
+        roomId,
+        person.personId,
+        displayName,
+        facts.rows[0].drawn ? "guest" : "member",
+      ]);
+    } catch (error) {
+      if ((error as { constraint?: string }).constraint === "members_room_name_key") {
+        throw new RoomError("NAME_TAKEN", "This name is taken in this room. Use another one.");
+      }
+      throw error;
+    }
+    return person;
+  }, pool);
 }

@@ -40,7 +40,7 @@ test("the return link opens the same identity in a second browser", async ({ pag
   await secondDevice.close();
 });
 
-test("a person who is not in the room sees nothing of it", async ({ page, browser }) => {
+test("a person outside the room sees its name and the join form, and no member", async ({ page, browser }) => {
   await createRoom(page, "Secret team room", "Meera");
   const invite = await page.getByRole("textbox", { name: "Invite link" }).inputValue();
 
@@ -48,9 +48,10 @@ test("a person who is not in the room sees nothing of it", async ({ page, browse
   const stranger = await strangerDevice.newPage();
   await stranger.goto(invite);
 
-  await expect(stranger.getByRole("heading", { level: 1 })).toHaveText("This room is not open to you");
-  await expect(stranger.getByText("Secret team room")).toHaveCount(0);
+  await expect(stranger.getByRole("heading", { level: 1 })).toHaveText("Secret team room");
+  await expect(stranger.getByRole("button", { name: "Join room" })).toBeVisible();
   await expect(stranger.getByText("Meera")).toHaveCount(0);
+  await expect(stranger.getByRole("textbox", { name: "Invite link" })).toHaveCount(0);
   await strangerDevice.close();
 });
 
