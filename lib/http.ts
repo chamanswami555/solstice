@@ -35,6 +35,9 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   ROOM_FULL: 409,
   NAME_TAKEN: 409,
   IDENTITY_CAP: 503,
+  NOT_ORGANIZER: 403,
+  ALREADY_DRAWN: 409,
+  TOO_FEW_MEMBERS: 409,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */

@@ -3,7 +3,9 @@
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
+import { DrawPanel } from "@/components/draw-panel";
 import { JoinForm } from "@/components/join-form";
+import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import type { RoomState } from "@/lib/rooms";
 
@@ -129,8 +131,15 @@ export function Room() {
           <p>This link opens your place in the room on another phone or after you clear your browser. It is shown one time.</p>
           <CopyLink label="Your return link" value={returnLink} />
           <p className="panel__warn">Keep it to yourself. Anyone with this link is you in this room.</p>
+          <div>
+            <Button variant="quiet" onClick={() => setReturnLink(null)}>
+              I saved it
+            </Button>
+          </div>
         </section>
       )}
+
+      <DrawPanel state={view.state} onDrawn={() => void reload()} />
 
       <section className="panel" aria-labelledby="invite-title">
         <h2 className="panel__title" id="invite-title">

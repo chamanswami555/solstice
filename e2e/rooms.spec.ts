@@ -23,6 +23,9 @@ test("an organizer creates a room and gets an invite link and a return link", as
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/room-phone.png", fullPage: true });
+
+  await page.getByRole("button", { name: "I saved it" }).click();
+  await expect(page.getByRole("textbox", { name: "Your return link" })).toHaveCount(0);
 });
 
 test("the return link opens the same identity in a second browser", async ({ page, browser }) => {

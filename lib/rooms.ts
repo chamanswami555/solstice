@@ -21,6 +21,8 @@ export type RoomState = {
   room: { code: string; name: string; kind: RoomKind; exchangeDate: string | null; budget: string | null };
   me: RoomMember;
   members: RoomMember[];
+  /** After the draw: the one name this person gives to. Null for a guest and before the draw. */
+  draw: { drawn: boolean; receiverName: string | null };
 };
 
 /** A guest joined after the draw: room talk and the reveal, and no pair. */
@@ -55,7 +57,13 @@ export async function createRoom(
 export async function getRoomState(code: string, personId: string, pool: pg.Pool = getPool()): Promise<RoomState | null> {
   const rows = await pool.query(
     `select r.code, r.name, r.kind, to_char(r.exchange_date, 'YYYY-MM-DD') as exchange_date, r.budget,
-            m.display_name, m.role, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me
+            m.display_name, m.role, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me,
+            exists (select 1 from draws d where d.room_id = r.id) as drawn,
+            (select receiver.display_name
+               from pairs p
+               join members giver on giver.id = p.giver_id
+               join members receiver on receiver.id = p.receiver_id
+              where p.room_id = r.id and giver.person_id = $2) as receiver_name
        from rooms r
        join members m on m.room_id = r.id
       where r.code = $1
@@ -75,6 +83,7 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
     room: { code: mine.code, name: mine.name, kind: mine.kind, exchangeDate: mine.exchange_date, budget: mine.budget },
     me: member(mine),
     members: rows.rows.map(member),
+    draw: { drawn: mine.drawn, receiverName: mine.receiver_name },
   };
 }
 
