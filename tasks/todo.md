@@ -20,7 +20,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 ## Phase: Thin round (gate 1)
 
-- [ ] Task 6: Join room (M)
+- [x] Task 6: Join room (M)
   - Acceptance: a person opens the invite link, enters a display name and is in the room. A new
     identity gets a return link one time. Join takes a row lock on the room: before the draw the
     role is `member`, after it `guest`. The 41st person is refused. A display name that is in the
