@@ -34,7 +34,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
     `components/join-form.tsx`, `tests/join.test.ts`, `tests/helpers/rooms.ts`, `e2e/join.spec.ts`.
   - Note: the room state for an outsider must show the room name and the join form, and nothing else.
 
-- [ ] Task 8: Draw (M)
+- [x] Task 8: Draw (M)
   - Acceptance: only the organizer can draw (others get status 403). Fewer than 3 members is
     refused (409). The draw is one ring over members, not guests, for every size from 3 to 40.
     The order of the reveal is shuffled apart from the ring. Two requests at the same time make
