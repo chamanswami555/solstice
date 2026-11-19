@@ -1,0 +1,34 @@
+import { expect, test } from "@playwright/test";
+
+test("the first screen shows the product name and loads with no error", async ({ page }) => {
+  const problems: string[] = [];
+  page.on("pageerror", (error) => problems.push(`page error: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") problems.push(`console error: ${message.text()}`);
+  });
+  page.on("requestfailed", (request) => problems.push(`request failed: ${request.url()}`));
+  page.on("response", (response) => {
+    if (response.status() >= 400) problems.push(`status ${response.status()}: ${response.url()}`);
+  });
+
+  await page.goto("/");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Draw names. Ask questions. Keep the secret.");
+  await expect(page).toHaveTitle("Solstice");
+  await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+for (const size of [
+  { name: "phone", width: 390, height: 844 },
+  { name: "desktop", width: 1280, height: 800 },
+]) {
+  test(`the first screen fits a ${size.name} with no sideways scroll`, async ({ page }) => {
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await page.goto("/");
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: `test-results/home-${size.name}.png`, fullPage: true });
+  });
+}
