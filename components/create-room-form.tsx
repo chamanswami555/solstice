@@ -1,10 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCards, type Choice } from "@/components/ui/choice-cards";
 import { Field } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
+import type { ApiError } from "@/lib/http";
+import { LIMITS } from "@/lib/limits";
 
 type RoomKind = "december" | "tonight";
 
@@ -12,11 +15,6 @@ const KINDS: readonly Choice<RoomKind>[] = [
   { value: "december", title: "December room", hint: "Set a date and a budget." },
   { value: "tonight", title: "Tonight round", hint: "About 15 minutes. The gift is a note." },
 ];
-
-// The same caps as the checks in db/migrations/001_init.sql.
-const ROOM_NAME_MAX = 60;
-const DISPLAY_NAME_MAX = 30;
-const BUDGET_MAX = 40;
 
 /** The fields that can be wrong, in the order of the screen. */
 const CHECKED_FIELDS = ["roomName", "displayName", "exchangeDate"] as const;
@@ -48,11 +46,14 @@ export function CreateRoomForm() {
   const [kind, setKind] = useState<RoomKind>("tonight");
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const router = useRouter();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const found = findErrors(new FormData(form));
+    const data = new FormData(form);
+    const found = findErrors(data);
     setErrors(found);
 
     const firstWrong = CHECKED_FIELDS.find((name) => found[name]);
@@ -62,9 +63,27 @@ export function CreateRoomForm() {
       return;
     }
 
-    // TODO: send the values to POST /api/rooms, then open the new room.
-    // Until that route exists, the form sends nothing and says so.
-    setNotice("Nothing was sent. This form is not connected yet.");
+    setNotice(null);
+    setSending(true);
+    try {
+      const response = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(Object.fromEntries(data)),
+      });
+      if (response.status === 201) {
+        const created: { room: { code: string }; returnSecret: string | null } = await response.json();
+        // The return secret travels in the fragment, which a browser never sends to a server.
+        router.push(`/r/${created.room.code}${created.returnSecret ? `#k=${created.returnSecret}` : ""}`);
+        return;
+      }
+      const problem: ApiError = await response.json();
+      setErrors(problem.error.fields ?? {});
+      setNotice(problem.error.fields ? null : problem.error.message);
+    } catch {
+      setNotice("The room was not created. Check your connection and try again.");
+    }
+    setSending(false);
   }
 
   /** A field shows no error before the first submit. After it, each change checks the marked fields again. */
@@ -88,7 +107,7 @@ export function CreateRoomForm() {
         name="roomName"
         placeholder="Office exchange 2026"
         hint="Your group sees this name."
-        maxLength={ROOM_NAME_MAX}
+        maxLength={LIMITS.roomNameMax}
         autoComplete="off"
         required
         error={errors.roomName}
@@ -98,7 +117,7 @@ export function CreateRoomForm() {
         name="displayName"
         placeholder="Anita"
         hint="Your group sees you by this name."
-        maxLength={DISPLAY_NAME_MAX}
+        maxLength={LIMITS.displayNameMax}
         autoComplete="nickname"
         required
         error={errors.displayName}
@@ -119,13 +138,15 @@ export function CreateRoomForm() {
             name="budget"
             placeholder="500 rupees"
             hint="A guide for each gift."
-            maxLength={BUDGET_MAX}
+            maxLength={LIMITS.budgetMax}
             autoComplete="off"
           />
         </div>
       )}
-      <Button type="submit">Create room</Button>
-      {notice && <Notice>{notice}</Notice>}
+      <Button type="submit" loading={sending}>
+        Create room
+      </Button>
+      {notice && <Notice tone="error">{notice}</Notice>}
     </form>
   );
 }
