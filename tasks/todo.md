@@ -19,7 +19,7 @@ Verification commands: `npm test`, `npm run typecheck`, `npm run lint`, `npm run
   - Verify: run the script; read its report; two fixed test user ids only.
   - Dependencies: 1. Files: `lib/nexconn-server.ts`, `tests/nexconn.smoke.test.ts`, `tasks/plan.md`.
 
-- [ ] Task 3: Database schema and migration runner (M)
+- [x] Task 3: Database schema and migration runner (M)
   - Acceptance: `npm run db:migrate` builds the schema on an empty database and is safe to run
     again. Constraints refuse: a second draw for a room, a duplicate display name in a room, a
     member with two receivers.

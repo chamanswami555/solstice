@@ -3,5 +3,6 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
-  test: { include: ["tests/**/*.test.ts"], environment: "node" },
+  // Integration tests share one test database, so test files run one after the other.
+  test: { include: ["tests/**/*.test.ts"], environment: "node", fileParallelism: false },
 });
