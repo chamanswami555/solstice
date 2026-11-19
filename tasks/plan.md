@@ -1,0 +1,95 @@
+# Implementation Plan: Solstice V1
+
+Source spec: `SPEC.md`. Task list: `tasks/todo.md`.
+
+## Overview
+
+Solstice is a website with rooms for a secret gift exchange. A group joins by one link, the server
+draws one ring, a giver and a receiver talk through a mask, and the organizer reveals the pairs to
+all members at the same time. PostgreSQL holds all state. Nexconn carries room talk and signals.
+The build follows the five gates of the spec. Each task is one vertical slice that leaves the
+website in a state that works.
+
+## Architecture Decisions
+
+- One Next.js application (App Router, TypeScript strict). Server routes are the only writers.
+- Database access with the `pg` driver and plain SQL. A small migration runner applies
+  `db/migrations/*.sql` in order, each in one transaction, and records it in a table.
+  Reason: one dependency, the same code for local PostgreSQL and Neon.
+- Invariants are database constraints: one draw for each room (unique), one giver and one receiver
+  for each member (unique), unique display name in a room, reveal step with a compare-and-set update.
+- One user action is one transaction. The draw takes a row lock on the room.
+- Identity: a random person id in a signed, HTTP-only cookie (HMAC with a server secret, Node
+  crypto). The return secret is in the URL fragment; the database stores its hash. The server
+  refuses to start with a missing or placeholder secret.
+- Nexconn on the server: the official Node SDK (GitHub tag v0.1.2) if task 2 shows that it works
+  on the host. If not, a small signed client with `fetch`. Task 2 records the result here.
+- Nexconn in the browser: `@nexconn/chat` and `@nexconn/engine`, loaded on the room screen only.
+- The browser trusts no signal. A signal causes a load of the room state from one server route.
+  The room screen also loads the state every 10 seconds.
+- Response fields are allow-listed in one module (`lib/view.ts`). No route returns a database row.
+- Limits and caps are in one file (`lib/limits.ts`).
+- The product name is one constant (`lib/brand.ts`).
+- Tests: Vitest for unit and integration tests against a separate local database. Playwright for
+  browser tests. Tests that connect to Nexconn use fixed test user ids.
+- User interface: one design direction and shared tokens before the first screen. Each screen is
+  checked in a real browser engine for errors, keyboard use and computed contrast.
+
+## Dependency Graph
+
+```
+config and secrets guard
+    |
+database schema and migrations ---- Nexconn smoke test (needs the owner's keys)
+    |                                      |
+identity (cookie, return link)       server client for Nexconn
+    |                                      |
+create room, join room --------------- room talk
+    |
+draw ---- reveal ---- deploy (gate 1)
+    |
+wish list, mask talk, gift note, word list (gate 2)
+    |
+demo room, usage page, limits, removal before the draw (gate 3)
+    |
+nudge, cheers, online status, draw card in room talk (gate 4)
+    |
+write-up, video, submission (gate 5)
+```
+
+## Phases
+
+| Phase | Tasks | Gate | Live on the public URL by (IST) |
+| --- | --- | --- | --- |
+| Foundation | 1 to 4 | | 20 November, 12:00 (local) |
+| Thin round | 5 to 10 | 1 | 20 November, 23:00 |
+| Secret talk | 11 to 14 | 2 | 21 November, 14:00 |
+| Judge and safety | 15 to 18 | 3 | 21 November, 22:00 |
+| Extras | 19 | 4 | 22 November, 12:00 |
+| Submission | 20 to 22 | 5 | 22 November, 20:00 |
+
+## Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| The owner's keys and accounts arrive late | High | Tasks 1, 3, 4, 5 and the draw logic need no keys. Task 2 starts when the keys arrive |
+| The server SDK does not run on the host | Medium | Task 2 has a time box of 90 minutes, then the small signed client |
+| A targeted custom message does not reach only the named member | High | Task 2 checks it with two connected test users before mask talk is built |
+| Token expiry does not drop a connected member | Medium | Task 2 checks it. If it fails, removal also removes the member from the group and the state route refuses the member |
+| The profanity filter needs a payment card | Low | The server word list covers all text except room talk. Room talk then goes through a server check too |
+| The public URL is open before the limits of gate 3 | Medium | The identity cap is in task 6 (gate 1) |
+| The database on the host sleeps | Low | The first screen is static. The health route has a short timeout |
+| A slip of gate 1 | High | Gate 4 is the buffer. The cut list of the spec applies |
+
+## Definition of Done for each task
+
+1. Its acceptance criteria hold.
+2. Unit and integration tests pass, and the build and the type check pass.
+3. A new screen ran in a real browser engine with no uncaught error and no failed request.
+4. The task list is ticked, and the project record has one line for the decision, if there was one.
+
+## Open Questions
+
+- The items in the Open Items table of the spec (keys, accounts, real groups).
+- Whether the repository is public from the first push or made public at gate 5. The spec needs it
+  public for the submission. Recommendation: private until gate 3, public after the scan of gate 5.
