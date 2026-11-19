@@ -18,6 +18,13 @@ website in a state that works.
   Reason: one dependency, the same code for local PostgreSQL and Neon.
 - Invariants are database constraints: one draw for each room (unique), one giver and one receiver
   for each member (unique), unique display name in a room, reveal step with a compare-and-set update.
+- Join and draw take the same row lock on the room (`select ... for update`), so a join cannot land
+  inside a draw. The identity cap takes an advisory lock.
+- The rule of each route lives in a `lib/` function with the pool and the person id as arguments.
+  The route reads the cookie outside any try block, checks the body and calls it.
+- Pages are static shells with a client component inside `Suspense`. No page reads a cookie. State
+  comes from the state route, which answers with `Cache-Control: no-store`.
+- Every error answer has one shape: `{ error: { code, message, fields } }`.
 - One user action is one transaction. The draw takes a row lock on the room.
 - Identity: a random person id in a signed, HTTP-only cookie (HMAC with a server secret, Node
   crypto). The return secret is in the URL fragment; the database stores its hash. The server
@@ -61,24 +68,49 @@ write-up, video, submission (gate 5)
 
 | Phase | Tasks | Gate | Live on the public URL by (IST) |
 | --- | --- | --- | --- |
-| Foundation | 1 to 4 | | 20 November, 12:00 (local) |
-| Thin round | 5 to 10 | 1 | 20 November, 23:00 |
-| Secret talk | 11 to 14 | 2 | 21 November, 14:00 |
-| Judge and safety | 15 to 18 | 3 | 21 November, 22:00 |
-| Extras | 19 | 4 | 22 November, 12:00 |
+| Foundation | 1, 3, 4, 5 (done) | | |
+| Thin round | 6, 8, 9, 10a, then 2, 7, 10b | 1 | 20 November, 23:00 |
+| Secret talk | 11, 12a to 12d, 13, 14 | 2 | 21 November, 14:00 |
+| Judge and safety | 15, 16, 17a, 17b, 18 | 3 | 21 November, 22:00 |
+| Extras | 19a to 19e | 4 | 22 November, 12:00 |
 | Submission | 20 to 22 | 5 | 22 November, 20:00 |
+
+Tasks 6, 8, 9 and 10a need no Nexconn keys. The first deploy (10a) can go live with chat switched
+off by an explicit flag. Tasks 2, 7 and 10b start when the keys arrive.
+
+## Schema Plan
+
+`001_init.sql` (applied): people, rooms, members, draws, pairs.
+
+`002_gate2.sql` (with task 11):
+
+- `wishes (member_id, position 1 to 5, body up to 120 characters)`, primary key (member_id, position).
+- `gift_notes (room_id, giver_id, body up to 500 characters)`, primary key and foreign key to the pair.
+- `mask_messages (id, room_id, giver_id, from_giver, body up to 1000 characters, created_at)`,
+  foreign key to the pair. A thread is one pair.
+- `pairs.muted_by`: null, `giver` or `receiver`.
+
+`003_gate3.sql` (with task 15):
+
+- `members.person_id` can be null, and `members.is_demo` marks a demo member. A check keeps the
+  two in step: a demo member has no person.
+- One demo room for each organizer: a unique index on `rooms (organizer_id)` where the kind is demo.
+- `members.removed_at`: a removed member keeps the row, so the person cannot join again.
+- `rate_counters (key, window_start, count)`, primary key (key, window_start).
+
+A schema change after the first release needs the owner's yes. This plan is that request for 002 and 003.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| The owner's keys and accounts arrive late | High | Tasks 1, 3, 4, 5 and the draw logic need no keys. Task 2 starts when the keys arrive |
+| The owner's keys and accounts arrive late | High | Tasks 6, 8, 9 and 10a need no keys. The first deploy can run with chat switched off by an explicit flag |
 | The server SDK does not run on the host | Medium | Task 2 has a time box of 90 minutes, then the small signed client |
 | A targeted custom message does not reach only the named member | High | Task 2 checks it with two connected test users before mask talk is built |
 | Token expiry does not drop a connected member | Medium | Task 2 checks it. If it fails, removal also removes the member from the group and the state route refuses the member |
 | The profanity filter needs a payment card | Low | The server word list covers all text except room talk. Room talk then goes through a server check too |
 | The public URL is open before the limits of gate 3 | Medium | The identity cap is in task 6 (gate 1) |
-| The database on the host sleeps | Low | The first screen is static. The health route has a short timeout |
+| The database on the host sleeps | Low | The first screen and the health route are static and need no database |
 | A slip of gate 1 | High | Gate 4 is the buffer. The cut list of the spec applies |
 
 ## Definition of Done for each task

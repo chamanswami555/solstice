@@ -3,7 +3,7 @@
 Solstice is a website with rooms for a secret gift exchange.
 
 Status: approved by the owner on 19 November 2026. Last revision: 19 November 2026.
-Nothing is built yet. The task plan (`tasks/plan.md`) is not yet written.
+The task plan is `tasks/plan.md`. The task list with its state is `tasks/todo.md`.
 
 ## Context
 
