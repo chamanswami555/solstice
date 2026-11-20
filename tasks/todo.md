@@ -151,7 +151,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 ## Phase: Judge and safety (gate 3)
 
-- [ ] Task 15: Demo room (M)
+- [x] Task 15: Demo room (M)
   - Acceptance: a visitor alone finishes the draw, mask talk and the reveal in 3 minutes or less.
     Three demo members carry the "Demo" label, have wishes, and never connect to Nexconn. Each
     demo action runs inside the visitor's own request: the draw; a fixed answer when the visitor
