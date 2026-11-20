@@ -173,7 +173,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: one integration test for each limit. Dependencies: 12a.
   - Files: create `lib/rate.ts`, `tests/rate.test.ts`; modify `lib/limits.ts`, the two routes.
 
-- [ ] Task 17b: Removal before the draw (S)
+- [x] Task 17b: Removal before the draw (S)
   - Acceptance: only the organizer removes a member, and only before the draw. The member row
     gets a removal mark, so the person cannot join again and gets no state. The server expires the
     member's access token and removes the member from the group channel.
