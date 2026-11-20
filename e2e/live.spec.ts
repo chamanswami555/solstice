@@ -29,7 +29,8 @@ test("the first screen works under the content security policy, in 3 seconds or 
   });
   const started = Date.now();
 
-  await page.goto("/");
+  // Criterion 9 is about what the visitor sees: the time to the headline, not to the last file.
+  await page.goto("/", { waitUntil: "commit" });
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const shownAfterMs = Date.now() - started;
   // The date field comes from script, so it proves that the policy did not block the page's own code.
