@@ -20,7 +20,7 @@ const SIGNAL = "Solstice:Signal";
 const HARNESS = `<!doctype html><meta charset="utf-8"><title>SDK harness</title>
 <script type="importmap">{"imports":{"@nexconn/chat":"/chat.js","@nexconn/engine":"/engine.js"}}</script>
 <script type="module">
-import { NCEngine, MessageHandler, ConnectionStatusHandler } from "@nexconn/chat";
+import { NCEngine, MessageHandler, ConnectionStatusHandler, GroupChannel, SendTextMessageParams } from "@nexconn/chat";
 const plain = (value) => JSON.parse(JSON.stringify(value ?? null));
 window.received = [];
 window.statuses = [];
@@ -38,12 +38,13 @@ window.start = async (appKey, token) => {
   return plain(await NCEngine.connect({ token }));
 };
 window.connectionStatus = () => NCEngine.getConnectionStatus();
+window.sendText = async (channelId, text) => { const sent = await new GroupChannel(channelId).sendMessage(new SendTextMessageParams({ text })); return { isOk: sent.isOk, code: sent.code }; };
 window.reconnect = async (token) => { await NCEngine.disconnect(); return plain(await NCEngine.connect({ token })); };
 window.ready = true;
 </script>`;
 
 type Received = { type: string; sender: string; content: unknown };
-type Harness = { start(appKey: string, token: string): Promise<unknown>; reconnect(token: string): Promise<unknown>; connectionStatus(): number; received: Received[] };
+type Harness = { start(appKey: string, token: string): Promise<unknown>; reconnect(token: string): Promise<unknown>; connectionStatus(): number; sendText(channelId: string, text: string): Promise<{ isOk: boolean; code: number }>; received: Received[] };
 
 const FILES: Record<string, string> = {
   "/chat.js": "node_modules/@nexconn/chat/index.esm.js",
@@ -134,6 +135,19 @@ describe.skipIf(process.env.NEXCONN_SMOKE !== "1")("the browser SDK on the real 
     const ofThisRun = (messages: Received[]) => messages.filter((message) => JSON.stringify(message.content).includes(run));
     expect(ofThisRun(await receivedOf(pages[USER_A]))).toEqual([{ type: SIGNAL, sender: SYSTEM, content: { kind: "state", run } }]);
     expect(ofThisRun(await receivedOf(pages[USER_B]))).toEqual([]);
+  }, 60_000);
+
+  // The word list of the website is in the chat service (see the server smoke test). A change of that
+  // list takes about 15 minutes there, so this check fails for that long after a new word.
+  it("drops a text message with a listed word in the chat service itself", async () => {
+    const run = `run-${Date.now()}`;
+    const sent = await pages[USER_A].evaluate(([channelId, words]) => (window as unknown as Harness).sendText(channelId, words), [CHANNEL, `this is shit ${run}`]);
+    console.log("send of a listed word, as the sender sees it:", JSON.stringify(sent));
+
+    // The control message goes out after it. When B has the control, the first message did not come.
+    await sendToChannel("RC:TxtMsg", { content: `control-3 ${run}` });
+    await waitFor(pages[USER_B], "RC:TxtMsg", `control-3 ${run}`);
+    expect((await receivedOf(pages[USER_B])).filter((message) => JSON.stringify(message.content).includes(`shit ${run}`))).toEqual([]);
   }, 60_000);
 
   it("reports what token expiry does to a connected user", async () => {
