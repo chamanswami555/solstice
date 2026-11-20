@@ -137,7 +137,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: integration tests; browser run. Dependencies: 9, 12a.
   - Files: create `lib/notes.ts`, `app/api/rooms/[code]/note/route.ts`, `components/gift-note.tsx`, `tests/notes.test.ts`.
 
-- [ ] Task 14: Word list, length caps, reserved names (S)
+- [x] Task 14: Word list, length caps, reserved names (S)
   - Acceptance: every text field has a cap. The server refuses listed words in room names, display
     names, wishes, notes and mask messages. A display name cannot be a reserved word. Room talk
     uses the Nexconn profanity filter with the same list. The list is written by the builder in
