@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { NoteText } from "@/components/gift-note";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import type { ApiError } from "@/lib/http";
@@ -15,7 +16,10 @@ export function Reveal({ state, onMoved }: RevealProps) {
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const { room, me, reveal } = state;
+  const { room, me, reveal, note } = state;
+  // In a tonight round each pair comes with the giver's note, or with the words for a missing one.
+  const noteOf = (pair: { note: string | null }) =>
+    room.kind === "tonight" ? pair.note ? <NoteText text={pair.note} /> : "No note yet" : null;
 
   async function revealNext() {
     setSending(true);
@@ -58,6 +62,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
             <li className="members__row" key={pair.giverName}>
               <span>{pair.giverName}</span>
               <span className="members__tag">gave to {pair.receiverName}</span>
+              {noteOf(pair) && <span className="members__note">{noteOf(pair)}</span>}
             </li>
           ))}
         </ol>
@@ -103,6 +108,11 @@ export function Reveal({ state, onMoved }: RevealProps) {
             ? "Show the pairs one by one when your group is together. Every screen shows the same pair."
             : "The organizer has not started the reveal yet."}
         </p>
+        {note.notesIn !== null && (
+          <p>
+            Gift notes in: {note.notesIn} of {reveal.total}.
+          </p>
+        )}
         {controls}
         {problem && <Notice tone="error">{problem}</Notice>}
       </section>
@@ -120,6 +130,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
         <span className="reveal__verb">gives to</span>
         <span className="drawcard__name">{latest.receiverName}</span>
       </p>
+      {noteOf(latest) && <p className="reveal__note">{noteOf(latest)}</p>}
       {controls}
       {problem && <Notice tone="error">{problem}</Notice>}
       {reveal.step > 1 && (
@@ -128,6 +139,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
             <li className="members__row" key={pair.giverName}>
               <span>{pair.giverName}</span>
               <span className="members__tag">gives to {pair.receiverName}</span>
+              {noteOf(pair) && <span className="members__note">{noteOf(pair)}</span>}
             </li>
           ))}
         </ul>

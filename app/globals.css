@@ -88,13 +88,16 @@ body { display: flex; flex-direction: column; min-height: 100dvh; background-rep
 .copy__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-xs); }
 .copy__value { font-size: var(--text-sm); text-overflow: ellipsis; }
 .members { display: grid; gap: var(--space-2xs); margin: 0; padding: 0; list-style: none; }
-.members__row { display: flex; justify-content: space-between; gap: var(--space-md); padding-block: var(--space-xs); border-top: 1px solid var(--color-rule); }
+.members__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-md); padding-block: var(--space-xs); border-top: 1px solid var(--color-rule); }
 .members__row:first-child { border-top: 0; }
 .members__tag { font-size: var(--text-sm); color: var(--color-muted); }
 .drawcard__name { font-size: var(--text-4xl); font-weight: var(--display-weight); letter-spacing: var(--tracking-display); line-height: 1.1; overflow-wrap: break-word; min-width: 0; }
 .confirm { display: grid; gap: var(--space-sm); }
 .reveal__pair { display: grid; gap: var(--space-2xs); }
 .reveal__verb { color: var(--color-muted); }
+.reveal__note { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-input); background-color: var(--color-cotton); overflow-wrap: anywhere; }
+.members__note { flex-basis: 100%; font-size: var(--text-sm); overflow-wrap: anywhere; }
+.field__input--area { min-height: 6rem; padding-block: var(--space-sm); line-height: 1.45; resize: vertical; }
 .wishlist { display: grid; gap: var(--space-2xs); margin: 0; padding-left: 1.2em; overflow-wrap: anywhere; }
 .talk { display: grid; align-content: start; gap: var(--space-sm); max-height: 20rem; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
 .talk:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

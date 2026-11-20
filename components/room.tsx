@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
 import { DrawPanel } from "@/components/draw-panel";
+import { GiftNote } from "@/components/gift-note";
 import { JoinForm } from "@/components/join-form";
 import { MaskThreads } from "@/components/mask-thread";
 import { Reveal } from "@/components/reveal";
@@ -152,6 +153,7 @@ export function Room() {
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
+      <GiftNote state={view.state} />
       <Wishes state={view.state} />
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
 
