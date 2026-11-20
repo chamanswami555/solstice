@@ -124,7 +124,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
     tells the sender "This thread is muted".
   - Verify: integration test; browser run. Dependencies: 12a. Files: modify `lib/mask.ts`, `components/mask-thread.tsx`, `tests/mask.test.ts`.
 
-- [ ] Task 12d: Leak test (S)
+- [x] Task 12d: Leak test (S)
   - Acceptance: with 4 members, before the reveal, no server response, page source or received
     Nexconn message links a giver to a pair for the receiver, the organizer or a third member.
   - Verify: the browser test reads every response and message; it fails when the allow-list is removed.
