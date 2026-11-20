@@ -50,6 +50,9 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   NO_NOTES: 409,
   NOTE_CLOSED: 409,
   DEMO_ROOM: 409,
+  REMOVED: 403,
+  MEMBER_NOT_FOUND: 404,
+  CANNOT_REMOVE_ORGANIZER: 409,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */

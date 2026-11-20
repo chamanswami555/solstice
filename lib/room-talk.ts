@@ -53,3 +53,18 @@ export async function openRoomTalk(
   }
   return { appKey: keys.appKey, region: keys.region, userId: personId, token: issued.accessToken, channelId: code };
 }
+
+/**
+ * Ends room talk for a person who was removed from the room: out of the channel, and every token
+ * of that person ends (a later room gets a new token). Never throws: the removal in our database
+ * is done, and the token route refuses this person for this room in any case.
+ */
+export async function closeRoomTalk(code: string, personId: string, keys: Config["nexconn"] = readConfig().nexconn, send: typeof fetch = fetch): Promise<void> {
+  if (!keys) return;
+  try {
+    await nexconnCall("/v4/group-channel/leave", { channelId: code, userIds: [personId] }, keys, send);
+    await nexconnCall("/v4/auth/access-token/expire", { userIds: [personId], expiresAt: Date.now() }, keys, send);
+  } catch (error) {
+    console.error("Room talk was not closed for a removed member:", error instanceof Error ? error.message : error);
+  }
+}

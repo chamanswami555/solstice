@@ -17,7 +17,10 @@ export type RoomErrorCode =
   | "NOT_YOUR_MUTE"
   | "NO_NOTES"
   | "NOTE_CLOSED"
-  | "DEMO_ROOM";
+  | "DEMO_ROOM"
+  | "REMOVED"
+  | "MEMBER_NOT_FOUND"
+  | "CANNOT_REMOVE_ORGANIZER";
 
 export class RoomError extends Error {
   constructor(

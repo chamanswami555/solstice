@@ -161,6 +161,8 @@ export async function joinRoom(
     const roomId = room.rows[0].id;
 
     if (cookiePersonId) {
+      const removed = await db.query("select 1 from room_removals where room_id = $1 and person_id = $2", [roomId, cookiePersonId]);
+      if (removed.rowCount === 1) throw new RoomError("REMOVED", "The organizer removed you from this room.");
       const already = await db.query("select 1 from members where room_id = $1 and person_id = $2", [roomId, cookiePersonId]);
       if (already.rowCount === 1) return { personId: cookiePersonId, returnSecret: null };
     }
@@ -189,5 +191,42 @@ export async function joinRoom(
       throw error;
     }
     return person;
+  }, pool);
+}
+
+/**
+ * The organizer removes a member before the draw. The member row is deleted, so the person is in
+ * no query of the room any more, and a removal row keeps the person from joining again.
+ * The row lock on the room is the lock of the join and of the draw: a removal cannot land inside a draw.
+ * Returns the person id of the removed member, for the chat service.
+ */
+export async function removeMember(code: string, organizerId: string, displayName: string, pool: pg.Pool = getPool()): Promise<string> {
+  return inTransaction(async (db) => {
+    const room = await db.query("select id, kind, organizer_id = $2 as is_organizer from rooms where code = $1 for update", [code, organizerId]);
+    const found = room.rows[0];
+    // These two facts are read after the lock, in their own statement. A subquery in the locking
+    // statement would show the room as it was before the wait for the lock.
+    const facts = found
+      ? (
+          await db.query(
+            `select exists (select 1 from members where room_id = $1 and person_id = $2) as is_inside,
+                    exists (select 1 from draws where room_id = $1) as drawn`,
+            [found.id, organizerId],
+          )
+        ).rows[0]
+      : null;
+    if (!found || !facts.is_inside) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
+    if (!found.is_organizer) throw new RoomError("NOT_ORGANIZER", "Only the organizer can remove a member.");
+    if (found.kind === "demo") throw new RoomError("DEMO_ROOM", "A demo room keeps its demo members.");
+    if (facts.drawn) throw new RoomError("ALREADY_DRAWN", "The names are drawn. A member cannot be removed now.");
+
+    const member = await db.query("select id, person_id from members where room_id = $1 and lower(display_name) = lower($2)", [found.id, displayName]);
+    if (member.rowCount === 0) throw new RoomError("MEMBER_NOT_FOUND", "No member with this name is in the room.");
+    const { id, person_id: personId } = member.rows[0];
+    if (personId === organizerId) throw new RoomError("CANNOT_REMOVE_ORGANIZER", "The organizer stays in the room.");
+
+    await db.query("delete from members where id = $1", [id]);
+    await db.query("insert into room_removals (room_id, person_id) values ($1, $2)", [found.id, personId]);
+    return personId;
   }, pool);
 }
