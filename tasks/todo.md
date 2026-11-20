@@ -162,7 +162,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `db/migrations/003_gate3.sql`, `lib/demo.ts`, `app/api/demo/route.ts`,
     `components/demo-banner.tsx`, `e2e/demo.spec.ts`.
 
-- [ ] Task 16: Usage page (S)
+- [x] Task 16: Usage page (S)
   - Acceptance: a public page shows rooms, people, draws and reveals by kind of room, with demo
     rooms apart. Every number comes from one database query at request time.
   - Verify: integration test against seeded rows. Dependencies: 13. Files: create `app/usage/page.tsx`, `lib/usage.ts`, `tests/usage.test.ts`.
