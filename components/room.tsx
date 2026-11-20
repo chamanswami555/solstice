@@ -8,6 +8,7 @@ import { DrawPanel } from "@/components/draw-panel";
 import { GiftNote } from "@/components/gift-note";
 import { JoinForm } from "@/components/join-form";
 import { MaskThreads } from "@/components/mask-thread";
+import { MemberList } from "@/components/member-list";
 import { Reveal } from "@/components/reveal";
 import { RoomTalk } from "@/components/room-talk";
 import { Button } from "@/components/ui/button";
@@ -172,23 +173,7 @@ export function Room() {
         </section>
       )}
 
-      <section className="panel" aria-labelledby="members-title">
-        <h2 className="panel__title" id="members-title">
-          In the room: {members.length}
-        </h2>
-        <ul className="members">
-          {members.map((member) => (
-            <li className="members__row" key={member.displayName}>
-              <span>{member.displayName}</span>
-              <span className="members__tag">
-                {[member.isDemo && "demo", member.isOrganizer && "organizer", member.role === "guest" && "guest", member.displayName === me.displayName && "you"]
-                  .filter(Boolean)
-                  .join(", ")}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <MemberList state={view.state} onChanged={() => void reload()} />
     </div>
   );
 }

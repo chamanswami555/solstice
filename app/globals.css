@@ -88,7 +88,7 @@ body { display: flex; flex-direction: column; min-height: 100dvh; background-rep
 .copy__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-xs); }
 .copy__value { font-size: var(--text-sm); text-overflow: ellipsis; }
 .members { display: grid; gap: var(--space-2xs); margin: 0; padding: 0; list-style: none; }
-.members__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-md); padding-block: var(--space-xs); border-top: 1px solid var(--color-rule); }
+.members__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-md); padding-block: var(--space-xs); border-top: 1px solid var(--color-rule); }
 .members__row:first-child { border-top: 0; }
 .members__tag { font-size: var(--text-sm); color: var(--color-muted); }
 .drawcard__name { font-size: var(--text-4xl); font-weight: var(--display-weight); letter-spacing: var(--tracking-display); line-height: 1.1; overflow-wrap: break-word; min-width: 0; }
