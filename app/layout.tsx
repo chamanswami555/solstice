@@ -33,7 +33,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         <main className="site-main container">{children}</main>
         <footer className="container">
-          <p className="site-footer__line">{BRAND.tagline}</p>
+          <p className="site-footer__line">
+            {BRAND.tagline} <Link href="/usage">Usage numbers</Link>
+          </p>
         </footer>
       </body>
     </html>

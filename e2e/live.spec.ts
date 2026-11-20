@@ -52,6 +52,10 @@ test("the server and the database answer", async ({ request }) => {
   const door = await request.get("/api/rooms/ZZZZZZZZ");
   expect(door.status()).toBe(404);
   expect((await door.json()).error.code).toBe("ROOM_NOT_FOUND");
+  // The usage numbers come from one query over every table of rooms.
+  const usage = await request.get("/api/usage");
+  expect(usage.status()).toBe(200);
+  expect(Object.keys((await usage.json()).usage).sort()).toEqual(["december", "demo", "people", "tonight"]);
   const state = await request.get("/api/rooms/ZZZZZZZZ/state");
   expect(state.status()).toBe(401);
 });
