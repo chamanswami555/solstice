@@ -34,6 +34,8 @@ test("the first screen works under the content security policy, in 3 seconds or 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const shownAfterMs = Date.now() - started;
   // The date field comes from script, so it proves that the policy did not block the page's own code.
+  // The form answers a tap only after its script loaded, so the test waits for that first.
+  await page.waitForLoadState("load");
   await page.getByRole("radio", { name: /December room/ }).check();
   await expect(page.getByLabel("Exchange date")).toBeVisible();
 
