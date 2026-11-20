@@ -180,7 +180,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: integration tests; the smoke test result for token expiry. Dependencies: 6, 7.
   - Files: create `app/api/rooms/[code]/members/[name]/route.ts`; modify `lib/rooms.ts`, `components/room.tsx`, `tests/join.test.ts`.
 
-- [ ] Task 18: Keyboard and contrast pass (S)
+- [x] Task 18: Keyboard and contrast pass (S)
   - Acceptance: every action works with the keyboard only. Focus is visible. Each text and
     background pair has a contrast of 4.5 to 1 or more, computed from the tokens.
   - Verify: a browser test walks the full flow with the keyboard. Dependencies: 15.
