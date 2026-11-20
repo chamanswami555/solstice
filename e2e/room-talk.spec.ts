@@ -81,10 +81,18 @@ test("two members talk in the room and see the history after a reload", async ({
   await say(rohan, `Hi Anita, ${run}`);
   await expect(messages(anita).filter({ hasText: `Hi Anita, ${run}` })).toContainText("Rohan");
 
+  // A listed word stops on the sender's own screen, with the reason, and reaches nobody.
+  await anita.getByLabel("Message to the room").fill(`This is shit, ${run}`);
+  await anita.getByRole("button", { name: "Send" }).click();
+  await expect(anita.getByText("Use kinder words. This message was not sent.")).toBeVisible();
+  await say(anita, `A kind message, ${run}`);
+  await expect(messages(rohan).filter({ hasText: `A kind message, ${run}` })).toContainText("Anita");
+  await expect(messages(rohan).filter({ hasText: "This is shit" })).toHaveCount(0);
+
   await rohan.reload();
   await expect(messages(rohan).filter({ hasText: `Hello team, ${run}` })).toContainText("Anita", { timeout: 30_000 });
   await expect(messages(rohan).filter({ hasText: `Hi Anita, ${run}` })).toContainText("You");
-  await expect(messages(rohan).filter({ hasText: run })).toHaveCount(2);
+  await expect(messages(rohan).filter({ hasText: run })).toHaveCount(3);
 
   await rohan.setViewportSize({ width: 390, height: 844 });
   await rohan.screenshot({ path: "test-results/room-talk-phone.png", fullPage: true });

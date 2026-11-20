@@ -6,6 +6,7 @@ import { Notice } from "@/components/ui/notice";
 import { LIMITS } from "@/lib/limits";
 import { connectRoomTalk, type RoomTalk as Connection, type TalkMessage } from "@/lib/nexconn-client";
 import type { RoomMember } from "@/lib/rooms";
+import { hasBlockedWord } from "@/lib/word-list";
 
 type RoomTalkProps = { code: string; me: RoomMember; members: RoomMember[]; /** A signal came in: load the state of the room again. */ onSignal: () => void };
 
@@ -61,6 +62,8 @@ export function RoomTalk({ code, me, members, onSignal }: RoomTalkProps) {
     event.preventDefault();
     const words = text.trim();
     if (!words || !connection.current) return;
+    // The chat service has the same list, but it drops such a message without a word to the sender.
+    if (hasBlockedWord(words)) return setProblem("Use kinder words. This message was not sent.");
     setSending(true);
     setProblem(null);
     const sent = await connection.current.send(words).catch(() => false);

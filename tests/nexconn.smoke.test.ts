@@ -4,6 +4,7 @@
  */
 import { afterAll, describe, expect, it } from "vitest";
 import { nexconnCall, NexconnError } from "@/lib/nexconn-server";
+import { BLOCKED_WORDS } from "@/lib/word-list";
 
 const USER_A = "solsticeSmokeA";
 const USER_B = "solsticeSmokeB";
@@ -77,6 +78,12 @@ describe.skipIf(process.env.NEXCONN_SMOKE !== "1")("the real Nexconn app", () =>
 
   it("expires the tokens of a user", async () => {
     await nexconnCall("/v4/auth/access-token/expire", { userIds: [USER_B], expiresAt: Date.now() });
+  });
+
+  // Room talk goes from browser to browser through the chat service, so its own filter needs our list.
+  // This run sends the list; a word that is already there stays. The service says a change takes about 15 minutes.
+  it("gives the chat service the word list of the website for its profanity filter", async () => {
+    await nexconnCall("/v4/profanity-word/batch/add", { words: BLOCKED_WORDS.map((word) => ({ word })) });
   });
 
   it("adds a profanity word with no payment card", async () => {

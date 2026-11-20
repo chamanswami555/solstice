@@ -1,7 +1,7 @@
 /** Checks of request bodies. The server trusts no value before it passed one of these. */
 import { LIMITS } from "@/lib/limits";
 import type { MaskSide } from "@/lib/mask";
-import { hasBlockedWord } from "@/lib/word-list";
+import { hasBlockedWord, isReservedName } from "@/lib/word-list";
 
 export type RoomKind = "december" | "tonight";
 
@@ -19,6 +19,8 @@ export type FieldErrors = Record<string, string>;
 export type Parsed<T> = { ok: true; value: T } | { ok: false; fields: FieldErrors };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** The answer for a text with a word from the word list. */
+const KINDER = "Use kinder words.";
 
 function textOf(value: unknown): string | null {
   return typeof value === "string" ? value.trim() : null;
@@ -42,6 +44,8 @@ function exchangeDateError(value: unknown, now: Date): string | null {
 function displayNameError(displayName: string | null): string | null {
   if (!displayName) return "Enter the name your group knows you by.";
   if (displayName.length > LIMITS.displayNameMax) return `Use ${LIMITS.displayNameMax} characters or fewer.`;
+  if (isReservedName(displayName)) return "The website uses this name. Pick another one.";
+  if (hasBlockedWord(displayName)) return KINDER;
   return null;
 }
 
@@ -97,6 +101,7 @@ export function parseWishes(body: unknown): Parsed<{ wishes: string[] }> {
   if (wishes.some((wish) => wish.length > LIMITS.wishTextMax)) {
     return { ok: false, fields: { wishes: `Use ${LIMITS.wishTextMax} characters or fewer for each wish.` } };
   }
+  if (wishes.some(hasBlockedWord)) return { ok: false, fields: { wishes: KINDER } };
   return { ok: true, value: { wishes } };
 }
 
@@ -110,6 +115,7 @@ export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<C
   const roomName = textOf(input.roomName);
   if (!roomName) fields.roomName = "Enter a name for the room.";
   else if (roomName.length > LIMITS.roomNameMax) fields.roomName = `Use ${LIMITS.roomNameMax} characters or fewer.`;
+  else if (hasBlockedWord(roomName)) fields.roomName = KINDER;
 
   const displayName = textOf(input.displayName);
   const nameError = displayNameError(displayName);
@@ -127,6 +133,7 @@ export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<C
 
     budget = textOf(input.budget) || null;
     if (budget && budget.length > LIMITS.budgetMax) fields.budget = `Use ${LIMITS.budgetMax} characters or fewer.`;
+    else if (budget && hasBlockedWord(budget)) fields.budget = KINDER;
   }
 
   if (Object.keys(fields).length > 0) return { ok: false, fields };
