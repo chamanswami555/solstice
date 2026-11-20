@@ -21,7 +21,7 @@ export async function saveNote(code: string, personId: string, text: string, poo
     );
     const mine = found.rows[0];
     if (!mine) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
-    if (mine.kind !== "tonight") throw new RoomError("NO_NOTES", "Gift notes are part of a tonight round.");
+    if (mine.kind === "december") throw new RoomError("NO_NOTES", "Gift notes are part of a tonight round.");
     if (mine.role !== "member") throw new RoomError("GUEST", "A guest gives to nobody, so a guest has no gift note.");
     if (mine.position === null) throw new RoomError("NOT_DRAWN", "Write your note after the draw.");
     if (mine.position <= mine.reveal_step) throw new RoomError("NOTE_CLOSED", "Your pair is revealed. The note is closed.");

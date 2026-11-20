@@ -49,6 +49,7 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   NOT_YOUR_MUTE: 403,
   NO_NOTES: 409,
   NOTE_CLOSED: 409,
+  DEMO_ROOM: 409,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */

@@ -20,7 +20,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ code
   try {
     const { code } = await params;
     const changed = await setMaskMute(code, personId, parsed.value.side, parsed.value.muted);
-    after(() => signalPerson(code, changed.otherPersonId));
+    const other = changed.otherPersonId;
+    if (other) after(() => signalPerson(code, other));
     return Response.json({ thread: changed.thread });
   } catch (error) {
     return serverError(error);

@@ -67,7 +67,7 @@ describe("joinRoom", () => {
 
     expect(joined.returnSecret).toBeTruthy();
     const state = await getRoomState(room.code, joined.personId, pool);
-    expect(state?.me).toEqual({ displayName: "Rohan", isOrganizer: false, role: "member", talkId: joined.personId });
+    expect(state?.me).toEqual({ displayName: "Rohan", isOrganizer: false, role: "member", talkId: joined.personId, isDemo: false });
     expect(state?.members.map((member) => member.displayName)).toEqual(["Anita", "Rohan"]);
   });
 

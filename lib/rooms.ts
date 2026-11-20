@@ -19,7 +19,7 @@ export type CreatedRoom = {
  * nothing else, so no database row reaches a browser.
  */
 export type RoomState = {
-  room: { code: string; name: string; kind: RoomKind; exchangeDate: string | null; budget: string | null };
+  room: { code: string; name: string; kind: RoomKind | "demo"; exchangeDate: string | null; budget: string | null };
   me: RoomMember;
   members: RoomMember[];
   /** After the draw: the one name this person gives to. Null for a guest and before the draw. */
@@ -42,7 +42,8 @@ export type RoomState = {
  * A guest joined after the draw: room talk and the reveal, and no pair.
  * The talk id is the user id that chat messages carry. Every member of the room sees it in the chat in any case.
  */
-export type RoomMember = { displayName: string; isOrganizer: boolean; role: "member" | "guest"; talkId: string };
+/** A demo member is played by the website in a demo room. Its talk id is no person and never sends a message. */
+export type RoomMember = { displayName: string; isOrganizer: boolean; role: "member" | "guest"; talkId: string; isDemo: boolean };
 
 export { RoomError };
 
@@ -73,7 +74,8 @@ export async function createRoom(
 export async function getRoomState(code: string, personId: string, pool: pg.Pool = getPool()): Promise<RoomState | null> {
   const rows = await pool.query(
     `select r.code, r.name, r.kind, to_char(r.exchange_date, 'YYYY-MM-DD') as exchange_date, r.budget,
-            m.display_name, m.role, m.person_id, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me,
+            m.display_name, m.role, m.is_demo, coalesce(m.person_id, 'demo' || m.id) as talk_id,
+            coalesce(m.person_id = r.organizer_id, false) as is_organizer, coalesce(m.person_id = $2, false) as is_me,
             exists (select 1 from draws d where d.room_id = r.id) as drawn,
             (select receiver.display_name
                from pairs p
@@ -109,11 +111,12 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
   const mine = rows.rows.find((row) => row.is_me);
   if (!mine) return null;
 
-  const member = (row: { display_name: string; is_organizer: boolean; role: RoomMember["role"]; person_id: string }): RoomMember => ({
+  const member = (row: { display_name: string; is_organizer: boolean; role: RoomMember["role"]; talk_id: string; is_demo: boolean }): RoomMember => ({
     displayName: row.display_name,
     isOrganizer: row.is_organizer,
     role: row.role,
-    talkId: row.person_id,
+    talkId: row.talk_id,
+    isDemo: row.is_demo,
   });
   return {
     room: { code: mine.code, name: mine.name, kind: mine.kind, exchangeDate: mine.exchange_date, budget: mine.budget },
@@ -129,8 +132,8 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
     },
     note: {
       mine: mine.my_note,
-      open: mine.kind === "tonight" && mine.my_position !== null && mine.my_position > mine.reveal_step,
-      notesIn: mine.kind === "tonight" && mine.is_organizer ? mine.notes_in : null,
+      open: mine.kind !== "december" && mine.my_position !== null && mine.my_position > mine.reveal_step,
+      notesIn: mine.kind !== "december" && mine.is_organizer ? mine.notes_in : null,
     },
   };
 }
@@ -152,8 +155,9 @@ export async function joinRoom(
   pool: pg.Pool = getPool(),
 ): Promise<Person> {
   return inTransaction(async (db) => {
-    const room = await db.query("select id from rooms where code = $1 for update", [code]);
+    const room = await db.query("select id, kind from rooms where code = $1 for update", [code]);
     if (room.rowCount === 0) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
+    if (room.rows[0].kind === "demo") throw new RoomError("DEMO_ROOM", "A demo room is for one visitor. Create a room for your group.");
     const roomId = room.rows[0].id;
 
     if (cookiePersonId) {

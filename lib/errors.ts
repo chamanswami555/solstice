@@ -16,7 +16,8 @@ export type RoomErrorCode =
   | "RATE_LIMITED"
   | "NOT_YOUR_MUTE"
   | "NO_NOTES"
-  | "NOTE_CLOSED";
+  | "NOTE_CLOSED"
+  | "DEMO_ROOM";
 
 export class RoomError extends Error {
   constructor(

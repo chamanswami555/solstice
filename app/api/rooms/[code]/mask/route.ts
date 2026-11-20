@@ -38,7 +38,8 @@ export async function POST(request: Request, { params }: RouteContext): Promise<
     const { code } = await params;
     const posted = await postMaskMessage(code, personId, parsed.value.side, parsed.value.text);
     // Only the other person of the pair gets the signal. It carries no text, no sender and no thread.
-    after(() => signalPerson(code, posted.otherPersonId));
+    const other = posted.otherPersonId;
+    if (other) after(() => signalPerson(code, other));
     return Response.json({ thread: posted.thread }, { status: 201 });
   } catch (error) {
     return serverError(error);

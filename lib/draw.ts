@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import type pg from "pg";
 import { getPool, inTransaction } from "@/lib/db";
+import { seedDemoAfterDraw } from "@/lib/demo";
 import { DRAW_MIN_MEMBERS } from "@/lib/draw-rules";
 import { RoomError } from "@/lib/errors";
 
@@ -42,7 +43,7 @@ export function drawPairs(memberIds: readonly number[]): Pair[] {
 export async function drawRoom(code: string, personId: string, pool: pg.Pool = getPool()): Promise<void> {
   await inTransaction(async (db) => {
     const room = await db.query(
-      `select r.id, r.organizer_id = $2 as is_organizer,
+      `select r.id, r.kind, r.organizer_id = $2 as is_organizer,
               exists (select 1 from members m where m.room_id = r.id and m.person_id = $2) as is_inside
          from rooms r where r.code = $1 for update`,
       [code, personId],
@@ -63,5 +64,6 @@ export async function drawRoom(code: string, personId: string, pool: pg.Pool = g
        select $1, * from unnest($2::bigint[], $3::bigint[], $4::int[])`,
       [roomId, pairs.map((pair) => pair.giverId), pairs.map((pair) => pair.receiverId), pairs.map((pair) => pair.position)],
     );
+    if (room.rows[0].kind === "demo") await seedDemoAfterDraw(db, roomId);
   }, pool);
 }

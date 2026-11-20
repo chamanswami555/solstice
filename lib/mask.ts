@@ -1,5 +1,6 @@
 import type pg from "pg";
 import { getPool, inTransaction } from "@/lib/db";
+import { DEMO_REPLY } from "@/lib/demo";
 import { RoomError } from "@/lib/errors";
 import { LIMITS } from "@/lib/limits";
 
@@ -68,7 +69,7 @@ export async function getMaskThreads(code: string, personId: string, pool: pg.Po
 /**
  * Stores one mask message of the caller in the thread of that side. The lock on the caller's own
  * member row puts the caller's posts in a line, so the count for the rate limit is exact.
- * Returns the thread as the caller sees it, and the person to signal.
+ * Returns the thread as the caller sees it, and the person to signal (null for a demo member).
  * Not safe to repeat: a second call stores a second message.
  */
 export async function postMaskMessage(
@@ -77,7 +78,7 @@ export async function postMaskMessage(
   side: MaskSide,
   text: string,
   pool: pg.Pool = getPool(),
-): Promise<{ thread: MaskThread; otherPersonId: string }> {
+): Promise<{ thread: MaskThread; otherPersonId: string | null }> {
   return inTransaction(async (db) => {
     const me = (
       await db.query("select m.id, m.room_id from rooms r join members m on m.room_id = r.id where r.code = $1 and m.person_id = $2 for update of m", [code, personId])
@@ -87,7 +88,7 @@ export async function postMaskMessage(
     const iGive = side === "giving";
     const pair = (
       await db.query(
-        `select p.giver_id, p.muted_by, other.person_id as other_person
+        `select p.giver_id, p.muted_by, other.person_id as other_person, other.is_demo as other_is_demo
            from pairs p
            join members other on other.id = case when $3 then p.receiver_id else p.giver_id end
           where p.room_id = $1 and case when $3 then p.giver_id else p.receiver_id end = $2`,
@@ -110,6 +111,10 @@ export async function postMaskMessage(
     }
 
     await db.query("insert into mask_messages (room_id, giver_id, from_giver, body) values ($1, $2, $3, $4)", [me.room_id, pair.giver_id, iGive, text]);
+    // In a demo room the receiver is played by the website: the answer lands in the same request.
+    if (pair.other_is_demo && iGive) {
+      await db.query("insert into mask_messages (room_id, giver_id, from_giver, body) values ($1, $2, false, $3)", [me.room_id, pair.giver_id, DEMO_REPLY]);
+    }
     return { thread: (await threadsOf(db, code, personId))[side]!, otherPersonId: pair.other_person };
   }, pool);
 }
@@ -124,7 +129,7 @@ export async function setMaskMute(
   side: MaskSide,
   muted: boolean,
   pool: pg.Pool = getPool(),
-): Promise<{ thread: MaskThread; otherPersonId: string }> {
+): Promise<{ thread: MaskThread; otherPersonId: string | null }> {
   return inTransaction(async (db) => {
     const me = (await db.query("select m.id, m.room_id from rooms r join members m on m.room_id = r.id where r.code = $1 and m.person_id = $2", [code, personId])).rows[0];
     if (!me) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
@@ -133,7 +138,7 @@ export async function setMaskMute(
     const role = iGive ? "giver" : "receiver";
     const pair = (
       await db.query(
-        `select p.giver_id, p.muted_by, other.person_id as other_person
+        `select p.giver_id, p.muted_by, other.person_id as other_person, other.is_demo as other_is_demo
            from pairs p
            join members other on other.id = case when $3 then p.receiver_id else p.giver_id end
           where p.room_id = $1 and case when $3 then p.giver_id else p.receiver_id end = $2
