@@ -41,6 +41,8 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   TOO_FEW_MEMBERS: 409,
   NOT_DRAWN: 409,
   CHAT_OFF: 503,
+  GUEST: 403,
+  WISHES_CLOSED: 409,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */

@@ -8,7 +8,9 @@ export type RoomErrorCode =
   | "ALREADY_DRAWN"
   | "TOO_FEW_MEMBERS"
   | "NOT_DRAWN"
-  | "CHAT_OFF";
+  | "CHAT_OFF"
+  | "GUEST"
+  | "WISHES_CLOSED";
 
 export class RoomError extends Error {
   constructor(

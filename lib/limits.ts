@@ -9,6 +9,8 @@ export const LIMITS = {
   /** Members and guests together in one room. */
   roomPeopleMax: 40,
   talkTextMax: 500,
+  wishesMax: 5,
+  wishTextMax: 120,
   /** Total identities, below the 2,000 monthly active users of the free Nexconn plan. */
   identityCap: 1800,
   /** A December room cannot be planned further ahead than this. */

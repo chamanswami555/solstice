@@ -26,6 +26,11 @@ export type RoomState = {
   draw: { drawn: boolean; receiverName: string | null };
   /** The pairs shown so far, in the order of the reveal. Every person in the room gets the same ones. */
   reveal: { step: number; total: number; pairs: RevealedPair[] };
+  /**
+   * This person's own wishes, and after the draw the wishes of the one person they give to.
+   * `open` is true while this person can still change their wishes.
+   */
+  wishes: { mine: string[]; receiver: string[] | null; open: boolean };
 };
 
 /**
@@ -77,7 +82,14 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
                from pairs p
                join members giver on giver.id = p.giver_id
                join members receiver on receiver.id = p.receiver_id
-              where p.room_id = r.id and p.position <= r.reveal_step) as revealed
+              where p.room_id = r.id and p.position <= r.reveal_step) as revealed,
+            (select coalesce(json_agg(w.body order by w.position), '[]'::json)
+               from wishes w where w.member_id = m.id) as my_wishes,
+            (select coalesce(json_agg(w.body order by w.position), '[]'::json)
+               from pairs p
+               join members giver on giver.id = p.giver_id
+               left join wishes w on w.member_id = p.receiver_id
+              where p.room_id = r.id and giver.person_id = $2 and w.member_id is not null) as receiver_wishes
        from rooms r
        join members m on m.room_id = r.id
       where r.code = $1
@@ -100,6 +112,12 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
     members: rows.rows.map(member),
     draw: { drawn: mine.drawn, receiverName: mine.receiver_name },
     reveal: { step: mine.reveal_step, total: mine.pair_count, pairs: mine.revealed },
+    wishes: {
+      mine: mine.my_wishes,
+      // Null for a person with no receiver: before the draw, and a guest.
+      receiver: mine.receiver_name === null ? null : mine.receiver_wishes,
+      open: mine.role === "member" && mine.reveal_step === 0,
+    },
   };
 }
 

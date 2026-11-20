@@ -58,6 +58,20 @@ export function parseReveal(body: unknown): Parsed<{ step: number }> {
   return { ok: true, value: { step } };
 }
 
+/** Each wish is trimmed, and an empty one is dropped. So a form with 5 fields can send all of them. */
+export function parseWishes(body: unknown): Parsed<{ wishes: string[] }> {
+  const given = (body as { wishes?: unknown } | null)?.wishes;
+  if (!Array.isArray(given) || given.some((wish) => typeof wish !== "string")) {
+    return { ok: false, fields: { wishes: "Send the wishes as a list of texts." } };
+  }
+  const wishes = given.map((wish: string) => wish.trim()).filter((wish) => wish !== "");
+  if (wishes.length > LIMITS.wishesMax) return { ok: false, fields: { wishes: `Write ${LIMITS.wishesMax} wishes or fewer.` } };
+  if (wishes.some((wish) => wish.length > LIMITS.wishTextMax)) {
+    return { ok: false, fields: { wishes: `Use ${LIMITS.wishTextMax} characters or fewer for each wish.` } };
+  }
+  return { ok: true, value: { wishes } };
+}
+
 export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<CreateRoomInput> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return { ok: false, fields: { form: "Send the room details as one object." } };
