@@ -14,7 +14,7 @@ export function DrawPanel({ state, onDrawn }: DrawPanelProps) {
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const { room, me, members, draw, reveal } = state;
+  const { room, me, members, draw, reveal, wishes } = state;
 
   async function drawNow() {
     setSending(true);
@@ -44,6 +44,17 @@ export function DrawPanel({ state, onDrawn }: DrawPanelProps) {
           You give to
         </h2>
         <p className="drawcard__name">{draw.receiverName}</p>
+        {wishes.receiver && wishes.receiver.length > 0 && (
+          <>
+            <p>Wish list of {draw.receiverName}:</p>
+            <ul className="wishlist">
+              {wishes.receiver.map((wish) => (
+                <li key={wish}>{wish}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        {wishes.receiver?.length === 0 && <p>{draw.receiverName} wrote no wishes yet.</p>}
         {reveal.step < reveal.total && <p className="panel__warn">Only you can see this. Keep it to yourself until the reveal.</p>}
       </section>
     ) : (

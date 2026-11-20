@@ -8,6 +8,7 @@ import { JoinForm } from "@/components/join-form";
 import { Reveal } from "@/components/reveal";
 import { RoomTalk } from "@/components/room-talk";
 import { Button } from "@/components/ui/button";
+import { Wishes } from "@/components/wishes";
 import { Notice } from "@/components/ui/notice";
 import type { RoomState } from "@/lib/rooms";
 
@@ -146,6 +147,7 @@ export function Room() {
       {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
+      <Wishes state={view.state} />
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
 
       <section className="panel" aria-labelledby="invite-title">
