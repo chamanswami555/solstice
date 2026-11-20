@@ -130,7 +130,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: the browser test reads every response and message; it fails when the allow-list is removed.
   - Dependencies: 12b. Files: create `e2e/leak.spec.ts`.
 
-- [ ] Task 13: Gift note (S)
+- [x] Task 13: Gift note (S)
   - Acceptance: in a tonight round a giver types one note. The organizer sees the count only. The
     reveal shows the note or "No note yet". The last reveal screen has the button "Start your
     December room".
