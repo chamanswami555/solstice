@@ -105,7 +105,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `db/migrations/002_gate2.sql`, `lib/wishes.ts`,
     `app/api/rooms/[code]/wishes/route.ts`, `components/wishes.tsx`, `tests/wishes.test.ts`.
 
-- [ ] Task 12a: Mask talk, server (M)
+- [x] Task 12a: Mask talk, server (M)
   - Acceptance: a giver and a receiver post to one route. The server checks the pair, the length
     cap and the rate limit, stores the message, and returns the thread with no giver name and no
     giver id for the receiver before the reveal. After the last pair of the reveal, the thread
@@ -113,13 +113,13 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: integration tests for pair checks and for the fields of the answer.
   - Dependencies: 8, 11. Files: create `lib/mask.ts`, `app/api/rooms/[code]/mask/route.ts`, `tests/mask.test.ts`.
 
-- [ ] Task 12b: Mask talk, threads on screen (M)
+- [x] Task 12b: Mask talk, threads on screen (M)
   - Acceptance: each member has two threads on the room screen. A new message shows in the other
     browser after a signal, or within 10 seconds with no signal.
   - Verify: browser test with two browsers. Dependencies: 12a, 10b.
   - Files: create `components/mask-thread.tsx`, `e2e/mask.spec.ts`; modify `components/room.tsx`, `lib/signal.ts`.
 
-- [ ] Task 12c: Mute (S)
+- [x] Task 12c: Mute (S)
   - Acceptance: each side can mute a thread. The server refuses a message in a muted thread and
     tells the sender "This thread is muted".
   - Verify: integration test; browser run. Dependencies: 12a. Files: modify `lib/mask.ts`, `components/mask-thread.tsx`, `tests/mask.test.ts`.
