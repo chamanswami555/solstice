@@ -16,7 +16,7 @@ export type CreatedRoom = {
 
 /**
  * What one person may see of a room. This type is the allow-list: a route returns this object and
- * nothing else, so no database row and no person id reaches a browser.
+ * nothing else, so no database row reaches a browser.
  */
 export type RoomState = {
   room: { code: string; name: string; kind: RoomKind; exchangeDate: string | null; budget: string | null };
@@ -28,8 +28,11 @@ export type RoomState = {
   reveal: { step: number; total: number; pairs: RevealedPair[] };
 };
 
-/** A guest joined after the draw: room talk and the reveal, and no pair. */
-export type RoomMember = { displayName: string; isOrganizer: boolean; role: "member" | "guest" };
+/**
+ * A guest joined after the draw: room talk and the reveal, and no pair.
+ * The talk id is the user id that chat messages carry. Every member of the room sees it in the chat in any case.
+ */
+export type RoomMember = { displayName: string; isOrganizer: boolean; role: "member" | "guest"; talkId: string };
 
 export { RoomError };
 
@@ -60,7 +63,7 @@ export async function createRoom(
 export async function getRoomState(code: string, personId: string, pool: pg.Pool = getPool()): Promise<RoomState | null> {
   const rows = await pool.query(
     `select r.code, r.name, r.kind, to_char(r.exchange_date, 'YYYY-MM-DD') as exchange_date, r.budget,
-            m.display_name, m.role, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me,
+            m.display_name, m.role, m.person_id, m.person_id = r.organizer_id as is_organizer, m.person_id = $2 as is_me,
             exists (select 1 from draws d where d.room_id = r.id) as drawn,
             (select receiver.display_name
                from pairs p
@@ -85,10 +88,11 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
   const mine = rows.rows.find((row) => row.is_me);
   if (!mine) return null;
 
-  const member = (row: { display_name: string; is_organizer: boolean; role: RoomMember["role"] }): RoomMember => ({
+  const member = (row: { display_name: string; is_organizer: boolean; role: RoomMember["role"]; person_id: string }): RoomMember => ({
     displayName: row.display_name,
     isOrganizer: row.is_organizer,
     role: row.role,
+    talkId: row.person_id,
   });
   return {
     room: { code: mine.code, name: mine.name, kind: mine.kind, exchangeDate: mine.exchange_date, budget: mine.budget },

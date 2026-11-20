@@ -7,7 +7,8 @@ export type RoomErrorCode =
   | "NOT_ORGANIZER"
   | "ALREADY_DRAWN"
   | "TOO_FEW_MEMBERS"
-  | "NOT_DRAWN";
+  | "NOT_DRAWN"
+  | "CHAT_OFF";
 
 export class RoomError extends Error {
   constructor(

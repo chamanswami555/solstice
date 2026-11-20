@@ -1,5 +1,6 @@
 /** One shape for every error answer, and one safe way to read a JSON body. */
 import { RoomError, type RoomErrorCode } from "@/lib/errors";
+import { NexconnError } from "@/lib/nexconn-server";
 import type { FieldErrors } from "@/lib/validate";
 
 export type ApiError = { error: { code: string; message: string; fields?: FieldErrors } };
@@ -39,6 +40,7 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   ALREADY_DRAWN: 409,
   TOO_FEW_MEMBERS: 409,
   NOT_DRAWN: 409,
+  CHAT_OFF: 503,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */
@@ -46,6 +48,10 @@ export function serverError(error: unknown): Response {
   if (error instanceof RoomError) {
     const fields = error.code === "NAME_TAKEN" ? { displayName: error.message } : undefined;
     return fail(REFUSAL_STATUS[error.code], error.code, error.message, fields);
+  }
+  if (error instanceof NexconnError) {
+    console.error(error.message);
+    return fail(502, "CHAT_UNAVAILABLE", "Room talk is not available now. Try again later.");
   }
   console.error(error);
   return fail(500, "SERVER_ERROR", "Something went wrong on our side. Try again.");

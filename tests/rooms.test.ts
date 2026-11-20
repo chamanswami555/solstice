@@ -102,8 +102,7 @@ describe("getRoomState", () => {
 
     expect(Object.keys(state!).sort()).toEqual(["draw", "me", "members", "reveal", "room"]);
     expect(Object.keys(state!.room).sort()).toEqual(["budget", "code", "exchangeDate", "kind", "name"]);
-    expect(Object.keys(state!.members[0]).sort()).toEqual(["displayName", "isOrganizer", "role"]);
-    expect(JSON.stringify(state)).not.toContain(created.personId);
+    expect(Object.keys(state!.members[0]).sort()).toEqual(["displayName", "isOrganizer", "role", "talkId"]);
   });
 });
 
