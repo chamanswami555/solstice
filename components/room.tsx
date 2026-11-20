@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
 import { DrawPanel } from "@/components/draw-panel";
 import { JoinForm } from "@/components/join-form";
+import { MaskThreads } from "@/components/mask-thread";
 import { Reveal } from "@/components/reveal";
 import { RoomTalk } from "@/components/room-talk";
 import { Button } from "@/components/ui/button";
@@ -52,10 +53,13 @@ export function Room() {
   const { code } = useParams<{ code: string }>();
   const [view, setView] = useState<View>({ status: "loading" });
   const [returnLink, setReturnLink] = useState<string | null>(null);
+  // Counts the state loads. The mask threads load again with each one, by timer or by signal.
+  const [loads, setLoads] = useState(0);
 
   const reload = useCallback(async () => {
     try {
       setView(await loadState(code));
+      setLoads((count) => count + 1);
     } catch {
       setView((shown) => (shown.status === "ready" ? shown : { status: "failed" }));
     }
@@ -114,7 +118,7 @@ export function Room() {
     );
   }
 
-  const { room, me, members, reveal } = view.state;
+  const { room, me, members, draw, reveal } = view.state;
   // Before the first pair the draw card leads. From the first pair on, the reveal leads.
   const revealPanel = <Reveal state={view.state} onMoved={reload} />;
   const inviteLink = `${window.location.origin}/r/${room.code}`;
@@ -147,6 +151,7 @@ export function Room() {
       {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
+      {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
       <Wishes state={view.state} />
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
 

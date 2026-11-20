@@ -93,7 +93,7 @@ async function shownAfter(actor: Page, route: string, action: () => Promise<void
   return (await seen) - (await answered);
 }
 
-test("a join, the draw and a reveal step reach another browser within 2 seconds", async ({ browser }) => {
+test("a join, the draw, a reveal step and a mask message reach another browser within 2 seconds", async ({ browser }) => {
   test.setTimeout(120_000);
   const problems: string[] = [];
   const anita = await openAs(browser, ANITA, problems);
@@ -111,7 +111,19 @@ test("a join, the draw and a reveal step reach another browser within 2 seconds"
   const revealMs = await shownAfter(anita, "/reveal", () => anita.getByRole("button", { name: "Reveal next" }).click(), rohan.getByRole("heading", { name: "Pair 1 of 3" }));
   await expect(meera.getByRole("heading", { name: "Pair 1 of 3" })).toBeVisible({ timeout: SIGNAL_LIMIT_MS + 1000 });
 
-  console.log(`signal times in ms after the server answer: join ${joinMs}, draw ${drawMs}, reveal ${revealMs}`);
+  // A mask message: the signal goes to the receiver only, and the receiver's thread shows the text.
+  const receiverName = (await anita.locator(".drawcard .drawcard__name").textContent())!;
+  const receiver = receiverName === "Rohan" ? rohan : meera;
+  await anita.getByLabel(`Message to ${receiverName}`).fill("What size do you wear?");
+  const maskMs = await shownAfter(
+    anita,
+    "/mask",
+    () => anita.getByLabel(`Message to ${receiverName}`).press("Enter"),
+    receiver.getByRole("log", { name: "Messages with your secret giver" }).getByText("What size do you wear?"),
+  );
+
+  console.log(`signal times in ms after the server answer: join ${joinMs}, draw ${drawMs}, reveal ${revealMs}, mask ${maskMs}`);
+  expect(maskMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
   expect(joinMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
   expect(drawMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
   expect(revealMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
