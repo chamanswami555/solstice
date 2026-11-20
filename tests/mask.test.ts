@@ -3,10 +3,10 @@ import pg from "pg";
 import { migrate } from "@/db/migrate.mjs";
 import { drawRoom } from "@/lib/draw";
 import { LIMITS } from "@/lib/limits";
-import { getMaskThreads, postMaskMessage } from "@/lib/mask";
+import { getMaskThreads, postMaskMessage, setMaskMute } from "@/lib/mask";
 import { revealNext } from "@/lib/reveal";
 import { createRoom, getRoomState, joinRoom, RoomError } from "@/lib/rooms";
-import { parseMaskMessage } from "@/lib/validate";
+import { parseMaskMessage, parseMaskMute } from "@/lib/validate";
 import { resetTestDatabase, TEST_DATABASE_URL } from "./helpers/test-database";
 
 let pool: pg.Pool;
@@ -194,6 +194,66 @@ describe("mask talk", () => {
     holder.release();
 
     expect(await post).toBe("RATE_LIMITED");
+  });
+});
+
+describe("mute", () => {
+  it("lets the receiver mute the thread, and then refuses a message from each side", async () => {
+    const { code, people, receiverOf } = await drawnRoom();
+    const receiver = people[receiverOf.Anita];
+
+    const muted = await setMaskMute(code, receiver, "receiving", true, pool);
+
+    expect(muted.otherPersonId).toBe(people.Anita);
+    expect(muted.thread).toMatchObject({ side: "receiving", muted: true, mutedByMe: true });
+    expect((await getMaskThreads(code, people.Anita, pool))!.giving).toMatchObject({ muted: true, mutedByMe: false });
+    expect(await outcome(postMaskMessage(code, people.Anita, "giving", "Hello?", pool))).toBe("THREAD_MUTED");
+    expect(await outcome(postMaskMessage(code, receiver, "receiving", "Hello?", pool))).toBe("THREAD_MUTED");
+  });
+
+  it("lets only the person who muted take the mute off", async () => {
+    const { code, people, receiverOf } = await drawnRoom();
+    const receiver = people[receiverOf.Anita];
+    await setMaskMute(code, receiver, "receiving", true, pool);
+
+    expect(await outcome(setMaskMute(code, people.Anita, "giving", false, pool))).toBe("NOT_YOUR_MUTE");
+    expect((await getMaskThreads(code, receiver, pool))!.receiving!.muted).toBe(true);
+
+    const open = await setMaskMute(code, receiver, "receiving", false, pool);
+    expect(open.thread).toMatchObject({ muted: false, mutedByMe: false });
+    expect(await outcome(postMaskMessage(code, people.Anita, "giving", "Thank you", pool))).toBe("done");
+  });
+
+  it("keeps the first mute when the other side mutes too, and a repeat changes nothing", async () => {
+    const { code, people, receiverOf } = await drawnRoom();
+    const receiver = people[receiverOf.Anita];
+    await setMaskMute(code, people.Anita, "giving", true, pool);
+
+    const second = await setMaskMute(code, receiver, "receiving", true, pool);
+    expect(second.thread).toMatchObject({ muted: true, mutedByMe: false });
+    await setMaskMute(code, people.Anita, "giving", true, pool);
+
+    expect((await getMaskThreads(code, people.Anita, pool))!.giving).toMatchObject({ muted: true, mutedByMe: true });
+    expect((await pool.query("select count(*)::int as n from pairs where muted_by = 'giver'")).rows[0].n).toBe(1);
+  });
+
+  it("refuses a mute by a person with no thread, and by a person outside the room", async () => {
+    const { code } = await drawnRoom();
+    const guest = await joinRoom(code, "Sana", null, pool);
+    const stranger = await createRoom({ ...officeRoom, roomName: "Other room" }, null, pool);
+
+    expect(await outcome(setMaskMute(code, guest.personId, "giving", true, pool))).toBe("NO_THREAD");
+    expect(await outcome(setMaskMute(code, stranger.personId, "giving", true, pool))).toBe("ROOM_NOT_FOUND");
+  });
+});
+
+describe("parseMaskMute", () => {
+  it("accepts a side and a yes or no", () => {
+    expect(parseMaskMute({ side: "receiving", muted: true })).toEqual({ ok: true, value: { side: "receiving", muted: true } });
+  });
+
+  it.each([[{ side: "receiving" }], [{ side: "receiving", muted: "yes" }], [{ side: "x", muted: true }], [null]])("refuses %j", (body) => {
+    expect(parseMaskMute(body)).toMatchObject({ ok: false });
   });
 });
 

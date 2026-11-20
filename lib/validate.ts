@@ -70,6 +70,13 @@ export function parseMaskMessage(body: unknown): Parsed<{ side: MaskSide; text: 
   return { ok: true, value: { side: input.side, text } };
 }
 
+export function parseMaskMute(body: unknown): Parsed<{ side: MaskSide; muted: boolean }> {
+  const input = (body ?? {}) as { side?: unknown; muted?: unknown };
+  if (input.side !== "giving" && input.side !== "receiving") return { ok: false, fields: { side: "Name the thread: giving or receiving." } };
+  if (typeof input.muted !== "boolean") return { ok: false, fields: { muted: "Send muted as true or false." } };
+  return { ok: true, value: { side: input.side, muted: input.muted } };
+}
+
 /** Each wish is trimmed, and an empty one is dropped. So a form with 5 fields can send all of them. */
 export function parseWishes(body: unknown): Parsed<{ wishes: string[] }> {
   const given = (body as { wishes?: unknown } | null)?.wishes;

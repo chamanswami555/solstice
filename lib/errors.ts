@@ -13,7 +13,8 @@ export type RoomErrorCode =
   | "WISHES_CLOSED"
   | "NO_THREAD"
   | "THREAD_MUTED"
-  | "RATE_LIMITED";
+  | "RATE_LIMITED"
+  | "NOT_YOUR_MUTE";
 
 export class RoomError extends Error {
   constructor(

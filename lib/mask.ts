@@ -113,3 +113,42 @@ export async function postMaskMessage(
     return { thread: (await threadsOf(db, code, personId))[side]!, otherPersonId: pair.other_person };
   }, pool);
 }
+
+/**
+ * Mutes the thread of that side, or takes the caller's own mute off. A muted thread takes no
+ * message from either side. Only the person who muted can open it again. Safe to repeat.
+ */
+export async function setMaskMute(
+  code: string,
+  personId: string,
+  side: MaskSide,
+  muted: boolean,
+  pool: pg.Pool = getPool(),
+): Promise<{ thread: MaskThread; otherPersonId: string }> {
+  return inTransaction(async (db) => {
+    const me = (await db.query("select m.id, m.room_id from rooms r join members m on m.room_id = r.id where r.code = $1 and m.person_id = $2", [code, personId])).rows[0];
+    if (!me) throw new RoomError("ROOM_NOT_FOUND", "This room does not exist.");
+
+    const iGive = side === "giving";
+    const role = iGive ? "giver" : "receiver";
+    const pair = (
+      await db.query(
+        `select p.giver_id, p.muted_by, other.person_id as other_person
+           from pairs p
+           join members other on other.id = case when $3 then p.receiver_id else p.giver_id end
+          where p.room_id = $1 and case when $3 then p.giver_id else p.receiver_id end = $2
+            for update of p`,
+        [me.room_id, me.id, iGive],
+      )
+    ).rows[0];
+    if (!pair) throw new RoomError("NO_THREAD", "You have no thread on this side. Threads open after the draw.");
+    if (!muted && pair.muted_by !== null && pair.muted_by !== role) {
+      throw new RoomError("NOT_YOUR_MUTE", "The other person muted this thread. Only they can open it again.");
+    }
+
+    // The first mute stays: a second mute from the other side changes nothing.
+    if (muted && pair.muted_by === null) await db.query("update pairs set muted_by = $3 where room_id = $1 and giver_id = $2", [me.room_id, pair.giver_id, role]);
+    if (!muted) await db.query("update pairs set muted_by = null where room_id = $1 and giver_id = $2", [me.room_id, pair.giver_id]);
+    return { thread: (await threadsOf(db, code, personId))[side]!, otherPersonId: pair.other_person };
+  }, pool);
+}

@@ -46,6 +46,7 @@ const REFUSAL_STATUS: Record<RoomErrorCode, number> = {
   NO_THREAD: 404,
   THREAD_MUTED: 409,
   RATE_LIMITED: 429,
+  NOT_YOUR_MUTE: 403,
 };
 
 /** A refusal keeps its own message. Any other error is logged on the server and tells the browser nothing. */
