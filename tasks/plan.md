@@ -125,3 +125,29 @@ A schema change after the first release needs the owner's yes. This plan is that
 - The items in the Open Items table of the spec (keys, accounts, real groups).
 - Whether the repository is public from the first push or made public at gate 5. The spec needs it
   public for the submission. Recommendation: private until gate 3, public after the scan of gate 5.
+
+## Nexconn Smoke Test Results
+
+Run on the real app on 20 November 2026 with `npm run test:smoke` (three fixed user ids, two fixed
+channel ids, removed after each run).
+
+- Decision: our own signed client (`lib/nexconn-server.ts`, one function), not the server SDK.
+  Reason: the signature is one SHA-1 line, and the SDK is a dependency from a Git tag.
+- Token issue, group create, join, room message, targeted custom message, token expiry and a
+  profanity word all answer with code 0. No payment card was needed.
+- A second create with the same channel id answers with code 25409. The token route treats this
+  code as "the room exists".
+- A join of a member who is already inside answers with code 0.
+- Two browsers on the Chat SDK for Web: a targeted custom message from the server reached only the
+  named member, in under half a second. The other member got the next room message and no signal.
+- A browser that connects gets recent targeted messages again, also ones that it got before on
+  another connection. So a signal can come late or two times. Each signal costs one more state
+  load and nothing else.
+- Token expiry gave two results in runs minutes apart. One time the user stayed connected and the
+  old token still opened a new connection. One time the user was disconnected within 5 seconds
+  and the old token was refused (code 31004). Removal uses the group channel, not token expiry.
+- The profanity filter of Nexconn works on text messages from the browser SDK only. Mask talk
+  goes through our server, so it uses our own word list.
+- Hosts that the browser SDK used in the Singapore region, for the content security policy of
+  task 7: `https://*.rongnav.com`, `https://dualstack-cloudcontrol.sg-light-edge.com`,
+  `wss://ws.sg-light-edge.com`. The first one is a navigation host and its name can change.

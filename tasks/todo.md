@@ -68,7 +68,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
     `NEXCONN_APP_SECRET`, `NEXCONN_REGION` or `CHAT=off`. The migration runs from the builder's
     machine with `npm run db:migrate` and the direct database URL.
 
-- [ ] Task 2: Nexconn smoke test (M, needs the owner's keys)
+- [x] Task 2: Nexconn smoke test (M, needs the owner's keys)
   - Acceptance: one script on the real Nexconn app issues and expires a token, creates a group,
     sends a room message, sends a targeted custom message that only the named test user receives,
     and reports whether the profanity filter works with no payment card, and whether token expiry
