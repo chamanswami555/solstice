@@ -7,7 +7,7 @@ import { LIMITS } from "@/lib/limits";
 import { connectRoomTalk, type RoomTalk as Connection, type TalkMessage } from "@/lib/nexconn-client";
 import type { RoomMember } from "@/lib/rooms";
 
-type RoomTalkProps = { code: string; me: RoomMember; members: RoomMember[] };
+type RoomTalkProps = { code: string; me: RoomMember; members: RoomMember[]; /** A signal came in: load the state of the room again. */ onSignal: () => void };
 
 /** One message for each id, oldest first. */
 function merged(shown: TalkMessage[], incoming: TalkMessage[]): TalkMessage[] {
@@ -16,7 +16,7 @@ function merged(shown: TalkMessage[], incoming: TalkMessage[]): TalkMessage[] {
 }
 
 /** The talk of the whole room. The room works without it: the draw and the reveal need no chat. */
-export function RoomTalk({ code, me, members }: RoomTalkProps) {
+export function RoomTalk({ code, me, members, onSignal }: RoomTalkProps) {
   const inputId = useId();
   const [status, setStatus] = useState<"connecting" | "ready" | "off">("connecting");
   const [messages, setMessages] = useState<TalkMessage[]>([]);
@@ -37,7 +37,7 @@ export function RoomTalk({ code, me, members }: RoomTalkProps) {
         });
         if (!response.ok) throw new Error(`token route answered ${response.status}`);
         const { talk } = await response.json();
-        const opened = await connectRoomTalk(talk, (incoming) => setMessages((shown) => merged(shown, incoming)));
+        const opened = await connectRoomTalk(talk, (incoming) => setMessages((shown) => merged(shown, incoming)), onSignal);
         if (closed) return opened.close();
         connection.current = opened;
         setStatus("ready");
@@ -51,7 +51,7 @@ export function RoomTalk({ code, me, members }: RoomTalkProps) {
       connection.current?.close();
       connection.current = null;
     };
-  }, [code]);
+  }, [code, onSignal]);
 
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });

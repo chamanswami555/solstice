@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { currentPersonId, rememberPerson } from "@/lib/current-person";
 import { fail, readJson, serverError } from "@/lib/http";
+import { signalRoom } from "@/lib/signal";
 import { joinRoom } from "@/lib/rooms";
 import { parseJoin } from "@/lib/validate";
 
@@ -15,6 +17,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
     const { code } = await params;
     const joined = await joinRoom(code, parsed.value.displayName, personId);
     await rememberPerson(joined.personId);
+    // The other browsers in the room load the new state. The signal goes out after the answer.
+    after(() => signalRoom(code));
     return Response.json({ returnSecret: joined.returnSecret }, { status: 201 });
   } catch (error) {
     return serverError(error);

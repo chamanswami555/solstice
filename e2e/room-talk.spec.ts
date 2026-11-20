@@ -1,8 +1,8 @@
 /**
- * Room talk on the real Nexconn app. It runs only with `npm run test:e2e:talk`.
- * The two people and the room have fixed ids, so a run adds no new identity to the chat service.
+ * Room talk and signals on the real Nexconn app. It runs only with `npm run test:e2e:talk`.
+ * The three people and the room have fixed ids, so a run adds no new identity to the chat service.
  */
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 import pg from "pg";
 import { hashReturnSecret, IDENTITY_COOKIE, signIdentity } from "../lib/identity";
 import { nexconnCall } from "../lib/nexconn-server";
@@ -12,13 +12,22 @@ import { TEST_DATABASE_URL } from "../tests/helpers/test-database";
 const ROOM = "TALKE2E1";
 const ANITA = `p${"0".repeat(20)}e2ea`;
 const ROHAN = `p${"0".repeat(20)}e2eb`;
+const MEERA = `p${"0".repeat(20)}e2ec`;
+/** Criterion 4 of the spec: a second browser shows a change within 2 seconds of the server answer. */
+const SIGNAL_LIMIT_MS = 2000;
 
-async function openAs(browser: Browser, personId: string, problems: string[]): Promise<Page> {
+async function pageOf(browser: Browser, personId: string): Promise<Page> {
   const context = await browser.newContext();
   await context.addCookies([{ name: IDENTITY_COOKIE, value: signIdentity(personId, E2E_SESSION_SECRET), url: "http://localhost:3412" }]);
-  const page = await context.newPage();
+  return context.newPage();
+}
+
+async function openAs(browser: Browser, personId: string, problems: string[]): Promise<Page> {
+  const page = await pageOf(browser, personId);
   page.on("console", (message) => {
-    if (message.type() === "error") problems.push(message.text());
+    // The chat SDK tries to post a usage log (user id, device details) to this host. Our policy
+    // blocks it, the browser reports the block, and room talk works without it.
+    if (message.type() === "error" && !message.text().includes("https://logcollection.ronghub.com/")) problems.push(message.text());
   });
   await page.goto(`/r/${ROOM}`);
   await expect(page.getByLabel("Message to the room")).toBeVisible({ timeout: 30_000 });
@@ -36,7 +45,9 @@ const messages = (page: Page) => page.getByRole("log", { name: "Messages" }).get
 test.beforeAll(async () => {
   const db = new pg.Client({ connectionString: TEST_DATABASE_URL });
   await db.connect();
-  await db.query("insert into people (id, return_hash) values ($1, $2), ($3, $4)", [ANITA, hashReturnSecret("e2e-anita"), ROHAN, hashReturnSecret("e2e-rohan")]);
+  await db.query("insert into people (id, return_hash) values ($1, $2), ($3, $4), ($5, $6)", [
+    ANITA, hashReturnSecret("e2e-anita"), ROHAN, hashReturnSecret("e2e-rohan"), MEERA, hashReturnSecret("e2e-meera"),
+  ]);
   const room = await db.query("insert into rooms (code, name, kind, organizer_id) values ($1, 'Office exchange 2026', 'tonight', $2) returning id", [ROOM, ANITA]);
   await db.query("insert into members (room_id, person_id, display_name, role) values ($1, $2, 'Anita', 'member'), ($1, $3, 'Rohan', 'member')", [room.rows[0].id, ANITA, ROHAN]);
   await db.end();
@@ -69,4 +80,41 @@ test("two members talk in the room and see the history after a reload", async ({
   await rohan.screenshot({ path: "test-results/room-talk-phone.png", fullPage: true });
   expect(problems).toEqual([]);
   for (const page of [anita, rohan]) await page.context().close();
+});
+
+/**
+ * Runs the action on one browser and returns how long after the server answer the target showed on
+ * another browser. The wait ends before the 10 second load of the room screen can explain it.
+ */
+async function shownAfter(actor: Page, route: string, action: () => Promise<void>, target: Locator): Promise<number> {
+  const seen = target.waitFor({ state: "visible", timeout: 9000 }).then(() => Date.now());
+  const answered = actor.waitForResponse((response) => response.url().endsWith(route) && response.request().method() === "POST").then(() => Date.now());
+  await action();
+  return (await seen) - (await answered);
+}
+
+test("a join, the draw and a reveal step reach another browser within 2 seconds", async ({ browser }) => {
+  test.setTimeout(120_000);
+  const problems: string[] = [];
+  const anita = await openAs(browser, ANITA, problems);
+  const rohan = await openAs(browser, ROHAN, problems);
+  const meera = await pageOf(browser, MEERA);
+  await meera.goto(`/r/${ROOM}`);
+  await meera.getByLabel("Your display name").fill("Meera");
+
+  const joinMs = await shownAfter(meera, "/members", () => meera.getByRole("button", { name: "Join room" }).click(), anita.getByRole("heading", { name: "In the room: 3" }));
+  await expect(meera.getByLabel("Message to the room")).toBeVisible({ timeout: 30_000 });
+
+  await anita.getByRole("button", { name: "Draw names" }).click();
+  const drawMs = await shownAfter(anita, "/draw", () => anita.getByRole("button", { name: "Yes, draw" }).click(), rohan.locator(".drawcard__name"));
+
+  const revealMs = await shownAfter(anita, "/reveal", () => anita.getByRole("button", { name: "Reveal next" }).click(), rohan.getByRole("heading", { name: "Pair 1 of 3" }));
+  await expect(meera.getByRole("heading", { name: "Pair 1 of 3" })).toBeVisible({ timeout: SIGNAL_LIMIT_MS + 1000 });
+
+  console.log(`signal times in ms after the server answer: join ${joinMs}, draw ${drawMs}, reveal ${revealMs}`);
+  expect(joinMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
+  expect(drawMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
+  expect(revealMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
+  expect(problems).toEqual([]);
+  for (const page of [anita, rohan, meera]) await page.context().close();
 });

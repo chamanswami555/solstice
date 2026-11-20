@@ -146,7 +146,7 @@ export function Room() {
       {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
-      <RoomTalk code={room.code} me={me} members={members} />
+      <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
 
       <section className="panel" aria-labelledby="invite-title">
         <h2 className="panel__title" id="invite-title">

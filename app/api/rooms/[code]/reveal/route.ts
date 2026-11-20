@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import { currentPersonId } from "@/lib/current-person";
 import { fail, readJson, serverError } from "@/lib/http";
+import { signalRoom } from "@/lib/signal";
 import { revealNext } from "@/lib/reveal";
 import { parseReveal } from "@/lib/validate";
 
@@ -17,7 +19,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
 
   try {
     const { code } = await params;
-    return Response.json({ reveal: await revealNext(code, personId, parsed.value.step) });
+    const reveal = await revealNext(code, personId, parsed.value.step);
+    // The other browsers in the room load the new state. The signal goes out after the answer.
+    after(() => signalRoom(code));
+    return Response.json({ reveal });
   } catch (error) {
     return serverError(error);
   }

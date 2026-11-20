@@ -1,6 +1,7 @@
 /** The browser side of room talk. The Chat SDK is loaded only when a room opens its talk. */
 import type { NexconnRegion } from "@/lib/config";
 import type { TalkAccess } from "@/lib/room-talk";
+import { SIGNAL_TYPE } from "@/lib/talk-rules";
 
 export type TalkMessage = { id: string; senderId: string; text: string; sentAt: number };
 export type RoomTalk = {
@@ -20,12 +21,18 @@ let initialized = false;
 /**
  * Connects this browser to the talk of one room. `onMessages` gets the history first and then each
  * new message. A message can come two times (the service sends recent ones again at connect), so
- * the caller keeps one message for each id.
+ * the caller keeps one message for each id. `onSignal` runs for each signal of this room: the
+ * caller loads the state from our server and trusts nothing in the signal itself.
  */
-export async function connectRoomTalk(access: TalkAccess, onMessages: (messages: TalkMessage[]) => void): Promise<RoomTalk> {
+export async function connectRoomTalk(
+  access: TalkAccess,
+  onMessages: (messages: TalkMessage[]) => void,
+  onSignal: () => void,
+): Promise<RoomTalk> {
   const { NCEngine, MessageHandler, BaseChannel, GroupChannel, GroupChannelIdentifier, SendTextMessageParams } = await import("@nexconn/chat");
   if (!initialized) {
     NCEngine.initialize({ appKey: access.appKey, areaCode: AREA[access.region] });
+    NCEngine.registerCustomMessages([{ messageType: SIGNAL_TYPE, isPersisted: false, isCounted: false }]);
     initialized = true;
   }
 
@@ -35,7 +42,12 @@ export async function connectRoomTalk(access: TalkAccess, onMessages: (messages:
       .filter((message) => message.messageType === TEXT_MESSAGE && message.channelIdentifier.channelId === access.channelId)
       .map((message) => ({ id: message.messageId, senderId: message.senderUserId, text: String(message.content.text ?? ""), sentAt: message.sentTime }));
 
-  NCEngine.addMessageHandler(HANDLER, new MessageHandler({ onMessageReceived: ({ messages }) => onMessages(ofThisRoom(messages)) }));
+  const received = (messages: SdkMessage[]) => {
+    if (messages.some((message) => message.messageType === SIGNAL_TYPE && message.channelIdentifier.channelId === access.channelId)) onSignal();
+    const talk = ofThisRoom(messages);
+    if (talk.length > 0) onMessages(talk);
+  };
+  NCEngine.addMessageHandler(HANDLER, new MessageHandler({ onMessageReceived: ({ messages }) => received(messages) }));
   const connected = await NCEngine.connect({ token: access.token });
   if (!connected.isOk) {
     NCEngine.removeMessageHandler(HANDLER);
