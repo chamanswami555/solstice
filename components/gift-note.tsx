@@ -18,7 +18,7 @@ export function NoteText({ text }: { text: string }) {
 }
 
 /** The gift of a tonight round: one note or link that the giver writes for the person they give to. */
-export function GiftNote({ state }: { state: RoomState }) {
+export function GiftNote({ state, onSaved }: { state: RoomState; /** The note changed: load the state of the room again. */ onSaved: () => void }) {
   const id = useId();
   const { room, me, draw, note } = state;
   // The field starts from the saved note one time. A later state load must not undo what the giver types.
@@ -40,6 +40,7 @@ export function GiftNote({ state }: { state: RoomState }) {
         const saved: { note: string | null } = await response.json();
         setDraft(saved.note ?? "");
         setResult({ error: false, text: saved.note ? "Saved." : "No note now." });
+        onSaved();
       } else {
         const body: ApiError = await response.json();
         setResult({ error: true, text: body.error.message });
@@ -50,7 +51,7 @@ export function GiftNote({ state }: { state: RoomState }) {
     setSending(false);
   }
 
-  if (room.kind !== "tonight" || me.role !== "member" || !draw.receiverName) return null;
+  if (room.kind === "december" || me.role !== "member" || !draw.receiverName) return null;
 
   if (!note.open) {
     return (

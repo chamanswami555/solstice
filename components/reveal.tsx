@@ -19,7 +19,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
   const { room, me, reveal, note } = state;
   // In a tonight round each pair comes with the giver's note, or with the words for a missing one.
   const noteOf = (pair: { note: string | null }) =>
-    room.kind === "tonight" ? pair.note ? <NoteText text={pair.note} /> : "No note yet" : null;
+    room.kind === "december" ? null : pair.note ? <NoteText text={pair.note} /> : "No note yet";
 
   async function revealNext() {
     setSending(true);
@@ -66,7 +66,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
             </li>
           ))}
         </ol>
-        {room.kind === "tonight" && (
+        {room.kind !== "december" && (
           <div>
             <Link className="btn" href="/">
               Start your December room

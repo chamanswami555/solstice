@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
+import { DemoBanner } from "@/components/demo-banner";
 import { DrawPanel } from "@/components/draw-panel";
 import { GiftNote } from "@/components/gift-note";
 import { JoinForm } from "@/components/join-form";
@@ -123,46 +124,53 @@ export function Room() {
   // Before the first pair the draw card leads. From the first pair on, the reveal leads.
   const revealPanel = <Reveal state={view.state} onMoved={reload} />;
   const inviteLink = `${window.location.origin}/r/${room.code}`;
+  const returnPanel = returnLink && (
+      <section className="panel panel--lit" aria-labelledby="return-title">
+        <h2 className="panel__title" id="return-title">
+          Save your return link
+        </h2>
+        <p>This link opens your place in the room on another phone or after you clear your browser. It is shown one time.</p>
+        <CopyLink label="Your return link" value={returnLink} />
+        <p className="panel__warn">Keep it to yourself. Anyone with this link is you in this room.</p>
+        <div>
+          <Button variant="quiet" onClick={() => setReturnLink(null)}>
+            I saved it
+          </Button>
+        </div>
+      </section>
+  );
+  // The key gives a new room its own fresh panels: a demo that starts again must not keep typed drafts.
   return (
-    <div className="room">
+    <div className="room" key={room.code}>
       <div className="room__head">
         <h1 className="room__title">{room.name}</h1>
         <p className="room__meta">
-          {room.kind === "tonight" ? "Tonight round" : `December room, exchange on ${room.exchangeDate}`}
+          {room.kind === "december" ? `December room, exchange on ${room.exchangeDate}` : room.kind === "demo" ? "Demo room for one visitor" : "Tonight round"}
           {room.budget ? `, budget ${room.budget}` : ""}
         </p>
       </div>
 
-      {returnLink && (
-        <section className="panel panel--lit" aria-labelledby="return-title">
-          <h2 className="panel__title" id="return-title">
-            Save your return link
-          </h2>
-          <p>This link opens your place in the room on another phone or after you clear your browser. It is shown one time.</p>
-          <CopyLink label="Your return link" value={returnLink} />
-          <p className="panel__warn">Keep it to yourself. Anyone with this link is you in this room.</p>
-          <div>
-            <Button variant="quiet" onClick={() => setReturnLink(null)}>
-              I saved it
-            </Button>
-          </div>
-        </section>
-      )}
+      {room.kind === "demo" && <DemoBanner demoNames={members.filter((member) => member.isDemo).map((member) => member.displayName)} />}
+
+      {room.kind !== "demo" && returnPanel}
 
       {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
-      <GiftNote state={view.state} />
+      <GiftNote state={view.state} onSaved={() => void reload()} />
       <Wishes state={view.state} />
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
+      {room.kind === "demo" && returnPanel}
 
-      <section className="panel" aria-labelledby="invite-title">
-        <h2 className="panel__title" id="invite-title">
-          Invite your group
-        </h2>
-        <CopyLink label="Invite link" value={inviteLink} />
-      </section>
+      {room.kind !== "demo" && (
+        <section className="panel" aria-labelledby="invite-title">
+          <h2 className="panel__title" id="invite-title">
+            Invite your group
+          </h2>
+          <CopyLink label="Invite link" value={inviteLink} />
+        </section>
+      )}
 
       <section className="panel" aria-labelledby="members-title">
         <h2 className="panel__title" id="members-title">
@@ -173,7 +181,7 @@ export function Room() {
             <li className="members__row" key={member.displayName}>
               <span>{member.displayName}</span>
               <span className="members__tag">
-                {[member.isOrganizer && "organizer", member.role === "guest" && "guest", member.displayName === me.displayName && "you"]
+                {[member.isDemo && "demo", member.isOrganizer && "organizer", member.role === "guest" && "guest", member.displayName === me.displayName && "you"]
                   .filter(Boolean)
                   .join(", ")}
               </span>
