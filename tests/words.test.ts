@@ -58,3 +58,33 @@ describe("texts that people write", () => {
     expect(parseWishes({ wishes: ["A warm scarf", "some shit"] })).toMatchObject({ ok: false, fields: { wishes: "Use kinder words." } });
   });
 });
+
+describe("hidden characters", () => {
+  const message = "Remove the hidden characters from this text.";
+
+  it.each([
+    ["a zero width space", "Anita\u200b"],
+    ["a right to left mark", "\u200fAnita"],
+    ["a direction override", "Ani\u202eta"],
+    ["a new line", "Anita\nOrganizer"],
+    ["a tab", "Anita\tX"],
+    ["a byte order mark inside the name", "Ani\ufeffta"],
+  ])("refuse a display name with %s", (_, name) => {
+    expect(parseJoin({ displayName: name })).toMatchObject({ ok: false, fields: { displayName: message } });
+  });
+
+  it("refuse them in a room name, a budget and a wish too", () => {
+    expect(parseCreateRoom({ ...tonight, roomName: "Office\u200b exchange" }, TODAY)).toMatchObject({ ok: false, fields: { roomName: message } });
+    expect(parseCreateRoom({ ...tonight, kind: "december", exchangeDate: "2026-12-24", budget: "500\u202e" }, TODAY)).toMatchObject({
+      ok: false,
+      fields: { budget: message },
+    });
+    expect(parseWishes({ wishes: ["A scarf\u200f"] })).toMatchObject({ ok: false, fields: { wishes: message } });
+  });
+
+  it("allow the joiners that Indian scripts need, and names in any script", () => {
+    expect(parseJoin({ displayName: "\u0915\u094d\u200d\u0937\u093f\u0924\u093f" })).toMatchObject({ ok: true });
+    expect(parseJoin({ displayName: "\u0930\u093e\u091c\u093e" })).toMatchObject({ ok: true });
+    expect(parseJoin({ displayName: "Zo\u00eb" })).toMatchObject({ ok: true });
+  });
+});

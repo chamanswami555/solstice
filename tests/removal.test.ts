@@ -94,13 +94,14 @@ describe("removeMember", () => {
     expect(Number((await pool.query("select count(*) from pairs")).rows[0].count)).toBe(3);
     expect(await getRoomState(code, people.Rohan, pool)).toBeNull();
     expect(await getMaskThreads(code, people.Rohan, pool)).toBeNull();
+    // Each call starts when the one before it is done. Started together, one could reject before it is awaited.
     for (const refused of [
-      drawRoom(code, people.Rohan, pool),
-      revealNext(code, people.Rohan, 0, pool),
-      saveNote(code, people.Rohan, "A note", pool),
-      postMaskMessage(code, people.Rohan, "giving", "Hello", pool),
+      () => drawRoom(code, people.Rohan, pool),
+      () => revealNext(code, people.Rohan, 0, pool),
+      () => saveNote(code, people.Rohan, "A note", pool),
+      () => postMaskMessage(code, people.Rohan, "giving", "Hello", pool),
     ]) {
-      expect(await outcome(refused)).toBe("ROOM_NOT_FOUND");
+      expect(await outcome(refused())).toBe("ROOM_NOT_FOUND");
     }
   });
 

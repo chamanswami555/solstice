@@ -21,6 +21,13 @@ export type Parsed<T> = { ok: true; value: T } | { ok: false; fields: FieldError
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** The answer for a text with a word from the word list. */
 const KINDER = "Use kinder words.";
+/**
+ * Characters that change how a single-line text looks without being seen: control characters (a new
+ * line, a tab), direction marks and overrides, and invisible spaces. With them one person can take a
+ * name that looks like another member's name. The joiners that Indian scripts need (U+200C, U+200D) stay allowed.
+ */
+const HIDDEN = /[\p{Cc}\u200B\u200E\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/u;
+const NO_HIDDEN = "Remove the hidden characters from this text.";
 
 function textOf(value: unknown): string | null {
   return typeof value === "string" ? value.trim() : null;
@@ -44,6 +51,7 @@ function exchangeDateError(value: unknown, now: Date): string | null {
 function displayNameError(displayName: string | null): string | null {
   if (!displayName) return "Enter the name your group knows you by.";
   if (displayName.length > LIMITS.displayNameMax) return `Use ${LIMITS.displayNameMax} characters or fewer.`;
+  if (HIDDEN.test(displayName)) return NO_HIDDEN;
   if (isReservedName(displayName)) return "The website uses this name. Pick another one.";
   if (hasBlockedWord(displayName)) return KINDER;
   return null;
@@ -101,6 +109,7 @@ export function parseWishes(body: unknown): Parsed<{ wishes: string[] }> {
   if (wishes.some((wish) => wish.length > LIMITS.wishTextMax)) {
     return { ok: false, fields: { wishes: `Use ${LIMITS.wishTextMax} characters or fewer for each wish.` } };
   }
+  if (wishes.some((wish) => HIDDEN.test(wish))) return { ok: false, fields: { wishes: NO_HIDDEN } };
   if (wishes.some(hasBlockedWord)) return { ok: false, fields: { wishes: KINDER } };
   return { ok: true, value: { wishes } };
 }
@@ -115,6 +124,7 @@ export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<C
   const roomName = textOf(input.roomName);
   if (!roomName) fields.roomName = "Enter a name for the room.";
   else if (roomName.length > LIMITS.roomNameMax) fields.roomName = `Use ${LIMITS.roomNameMax} characters or fewer.`;
+  else if (HIDDEN.test(roomName)) fields.roomName = NO_HIDDEN;
   else if (hasBlockedWord(roomName)) fields.roomName = KINDER;
 
   const displayName = textOf(input.displayName);
@@ -133,6 +143,7 @@ export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<C
 
     budget = textOf(input.budget) || null;
     if (budget && budget.length > LIMITS.budgetMax) fields.budget = `Use ${LIMITS.budgetMax} characters or fewer.`;
+    else if (budget && HIDDEN.test(budget)) fields.budget = NO_HIDDEN;
     else if (budget && hasBlockedWord(budget)) fields.budget = KINDER;
   }
 
