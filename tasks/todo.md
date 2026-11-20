@@ -55,7 +55,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `lib/reveal.ts`, `app/api/rooms/[code]/reveal/route.ts`, `components/reveal.tsx`,
     `tests/reveal.test.ts`; modify `lib/rooms.ts`, `components/room.tsx`.
 
-- [ ] Task 10a: First deploy (M)
+- [x] Task 10a: First deploy (M)
   - Acceptance: the website is live on the public URL with the hosted database. Production
     starts with chat switched off only when `CHAT=off` is set; with no keys and no flag it refuses
     to start. Security headers are on every response. The health URL answers, and a new visitor
@@ -86,7 +86,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `app/api/rooms/[code]/token/route.ts`, `lib/nexconn-client.ts`,
     `components/room-talk.tsx`, `e2e/room-talk.spec.ts`; modify `components/room.tsx`.
 
-- [ ] Task 10b: Signals (S)
+- [x] Task 10b: Signals (S)
   - Acceptance: a join, a draw and a reveal step send a signal, and every browser loads the new
     state. With the signal blocked, the state still arrives by the 10-second load. At the reveal,
     a second browser shows the pair within 2 seconds of the server commit (criterion 4, measured).
