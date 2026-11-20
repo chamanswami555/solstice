@@ -11,7 +11,8 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data:",
   "font-src 'self'",
-  "connect-src 'self'",
+  // Room talk: the hosts that the chat SDK uses in the Singapore region, seen in the smoke test.
+  "connect-src 'self' https://*.rongnav.com https://*.sg-light-edge.com wss://*.sg-light-edge.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

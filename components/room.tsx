@@ -6,6 +6,7 @@ import { CopyLink } from "@/components/copy-link";
 import { DrawPanel } from "@/components/draw-panel";
 import { JoinForm } from "@/components/join-form";
 import { Reveal } from "@/components/reveal";
+import { RoomTalk } from "@/components/room-talk";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import type { RoomState } from "@/lib/rooms";
@@ -145,6 +146,7 @@ export function Room() {
       {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
+      <RoomTalk code={room.code} me={me} members={members} />
 
       <section className="panel" aria-labelledby="invite-title">
         <h2 className="panel__title" id="invite-title">

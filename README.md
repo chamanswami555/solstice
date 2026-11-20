@@ -33,7 +33,15 @@ npm test            unit and integration tests (needs a local database named sol
 npm run typecheck   type check
 npm run lint        lint
 npm run build       production build
-npm run test:e2e    browser tests against the production build
+npm run test:e2e    browser tests against the production build, with chat switched off
+```
+
+Two more commands call the real Nexconn app with the keys from `.env.local`. They use fixed test
+user ids, so a run adds no new users:
+
+```
+npm run test:smoke      the server calls and the browser SDK
+npm run test:e2e:talk   two browsers talk in one room
 ```
 
 ## Deploy

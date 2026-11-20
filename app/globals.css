@@ -95,4 +95,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; background-rep
 .confirm { display: grid; gap: var(--space-sm); }
 .reveal__pair { display: grid; gap: var(--space-2xs); }
 .reveal__verb { color: var(--color-muted); }
+.talk { display: grid; align-content: start; gap: var(--space-sm); max-height: 20rem; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.talk:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.talk__row { display: grid; gap: var(--space-3xs); }
+.talk__name { font-size: var(--text-sm); color: var(--color-muted); }
+.talk__text { overflow-wrap: anywhere; }
 .confirm__actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
