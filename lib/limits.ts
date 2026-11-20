@@ -8,6 +8,8 @@ export const LIMITS = {
   budgetMax: 40,
   /** Members and guests together in one room. */
   roomPeopleMax: 40,
+  /** New rooms, demo rooms too, from one client address in one hour. */
+  roomsPerHour: 10,
   talkTextMax: 500,
   wishesMax: 5,
   wishTextMax: 120,
