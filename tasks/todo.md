@@ -167,7 +167,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
     rooms apart. Every number comes from one database query at request time.
   - Verify: integration test against seeded rows. Dependencies: 13. Files: create `app/usage/page.tsx`, `lib/usage.ts`, `tests/usage.test.ts`.
 
-- [ ] Task 17a: Rate limits (S)
+- [x] Task 17a: Rate limits (S)
   - Acceptance: 10 rooms for each IP address in an hour and 20 mask messages for each member in a
     minute, counted in the database. A refused request gets status 429 with a plain sentence.
   - Verify: one integration test for each limit. Dependencies: 12a.
