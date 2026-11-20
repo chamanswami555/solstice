@@ -76,7 +76,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: run the script; read its report; two fixed test user ids only.
   - Dependencies: 1. Files: create `lib/nexconn-server.ts`, `tests/nexconn.smoke.test.ts`; modify `tasks/plan.md`.
 
-- [ ] Task 7: Room talk on Nexconn (M)
+- [x] Task 7: Room talk on Nexconn (M)
   - Acceptance: the token route issues the member's access token and, idempotent, creates the
     group channel of the room and adds the member, so a room made before the keys arrived works.
     Two members send and receive messages and see the history after a reload. The App Secret is
