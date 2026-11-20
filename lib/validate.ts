@@ -77,6 +77,15 @@ export function parseMaskMute(body: unknown): Parsed<{ side: MaskSide; muted: bo
   return { ok: true, value: { side: input.side, muted: input.muted } };
 }
 
+/** A gift note. An empty text is valid: it takes the note away. */
+export function parseNote(body: unknown): Parsed<{ text: string }> {
+  const text = textOf((body as { text?: unknown } | null)?.text);
+  if (text === null) return { ok: false, fields: { text: "Send the note as text." } };
+  if (text.length > LIMITS.noteTextMax) return { ok: false, fields: { text: `Use ${LIMITS.noteTextMax} characters or fewer.` } };
+  if (hasBlockedWord(text)) return { ok: false, fields: { text: "Use kinder words. This note was not saved." } };
+  return { ok: true, value: { text } };
+}
+
 /** Each wish is trimmed, and an empty one is dropped. So a form with 5 fields can send all of them. */
 export function parseWishes(body: unknown): Parsed<{ wishes: string[] }> {
   const given = (body as { wishes?: unknown } | null)?.wishes;

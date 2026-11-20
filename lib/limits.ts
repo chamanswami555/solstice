@@ -11,6 +11,7 @@ export const LIMITS = {
   talkTextMax: 500,
   wishesMax: 5,
   wishTextMax: 120,
+  noteTextMax: 500,
   maskTextMax: 1000,
   /** Mask messages of one member in one minute, over both threads. */
   maskPerMinute: 20,

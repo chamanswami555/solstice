@@ -14,7 +14,9 @@ export type RoomErrorCode =
   | "NO_THREAD"
   | "THREAD_MUTED"
   | "RATE_LIMITED"
-  | "NOT_YOUR_MUTE";
+  | "NOT_YOUR_MUTE"
+  | "NO_NOTES"
+  | "NOTE_CLOSED";
 
 export class RoomError extends Error {
   constructor(

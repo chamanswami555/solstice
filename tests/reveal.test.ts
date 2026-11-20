@@ -70,7 +70,7 @@ describe("revealNext", () => {
     )).rows[0];
     for (const personId of [...Object.values(people), guest.personId]) {
       const state = await getRoomState(code, personId, pool);
-      expect(state?.reveal).toEqual({ step: 1, total: 4, pairs: [{ giverName: first.giver, receiverName: first.receiver }] });
+      expect(state?.reveal).toEqual({ step: 1, total: 4, pairs: [{ giverName: first.giver, receiverName: first.receiver, note: null }] });
     }
   });
 
@@ -117,7 +117,7 @@ describe("revealNext", () => {
       "select giver.display_name as giver from pairs p join members giver on giver.id = p.giver_id order by p.position",
     )).rows.map((row) => row.giver);
     expect(reveal.pairs.map((pair) => pair.giverName)).toEqual(byPosition);
-    expect(Object.keys(reveal.pairs[0]).sort()).toEqual(["giverName", "receiverName"]);
+    expect(Object.keys(reveal.pairs[0]).sort()).toEqual(["giverName", "note", "receiverName"]);
     const ring = ringOrder(reveal.pairs);
     expect(ring.map((pair) => pair.giverName).sort()).toEqual(["Anita", "Kabir", "Meera", "Rohan"]);
     ring.forEach((pair, index) => expect(pair.receiverName).toBe(ring[(index + 1) % ring.length].giverName));

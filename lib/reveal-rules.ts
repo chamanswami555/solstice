@@ -1,6 +1,7 @@
 /** Reveal rules that the browser also needs. No database code here. */
 
-export type RevealedPair = { giverName: string; receiverName: string };
+/** `note` is the gift note of the pair in a tonight round. Null when the giver wrote none. */
+export type RevealedPair = { giverName: string; receiverName: string; note: string | null };
 
 /** True while the visitor's own calendar day is before the exchange date (yyyy-mm-dd). */
 export function isBeforeExchangeDate(exchangeDate: string | null, now: Date): boolean {
@@ -11,9 +12,9 @@ export function isBeforeExchangeDate(exchangeDate: string | null, now: Date): bo
 }
 
 /** Orders the pairs of a full reveal as the ring: each receiver is the giver of the next pair. */
-export function ringOrder(pairs: readonly RevealedPair[]): RevealedPair[] {
+export function ringOrder<Pair extends { giverName: string; receiverName: string }>(pairs: readonly Pair[]): Pair[] {
   const byGiver = new Map(pairs.map((pair) => [pair.giverName, pair]));
-  const ring: RevealedPair[] = [];
+  const ring: Pair[] = [];
   let next = pairs[0];
   while (next && ring.length < pairs.length) {
     ring.push(next);

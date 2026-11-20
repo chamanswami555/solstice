@@ -31,6 +31,11 @@ export type RoomState = {
    * `open` is true while this person can still change their wishes.
    */
   wishes: { mine: string[]; receiver: string[] | null; open: boolean };
+  /**
+   * The caller's own gift note of a tonight round, and `open` while they can still change it.
+   * `notesIn` is the number of notes in the room, for the organizer only: a count and no text.
+   */
+  note: { mine: string | null; open: boolean; notesIn: number | null };
 };
 
 /**
@@ -77,7 +82,8 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
               where p.room_id = r.id and giver.person_id = $2) as receiver_name,
             r.reveal_step,
             (select count(*)::int from pairs p where p.room_id = r.id) as pair_count,
-            (select coalesce(json_agg(json_build_object('giverName', giver.display_name, 'receiverName', receiver.display_name)
+            (select coalesce(json_agg(json_build_object('giverName', giver.display_name, 'receiverName', receiver.display_name,
+                                                        'note', (select n.body from gift_notes n where n.room_id = p.room_id and n.giver_id = p.giver_id))
                                       order by p.position), '[]'::json)
                from pairs p
                join members giver on giver.id = p.giver_id
@@ -89,7 +95,10 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
                from pairs p
                join members giver on giver.id = p.giver_id
                left join wishes w on w.member_id = p.receiver_id
-              where p.room_id = r.id and giver.person_id = $2 and w.member_id is not null) as receiver_wishes
+              where p.room_id = r.id and giver.person_id = $2 and w.member_id is not null) as receiver_wishes,
+            (select p.position from pairs p where p.room_id = r.id and p.giver_id = m.id) as my_position,
+            (select n.body from gift_notes n where n.room_id = r.id and n.giver_id = m.id) as my_note,
+            (select count(*)::int from gift_notes n where n.room_id = r.id) as notes_in
        from rooms r
        join members m on m.room_id = r.id
       where r.code = $1
@@ -117,6 +126,11 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
       // Null for a person with no receiver: before the draw, and a guest.
       receiver: mine.receiver_name === null ? null : mine.receiver_wishes,
       open: mine.role === "member" && mine.reveal_step === 0,
+    },
+    note: {
+      mine: mine.my_note,
+      open: mine.kind === "tonight" && mine.my_position !== null && mine.my_position > mine.reveal_step,
+      notesIn: mine.kind === "tonight" && mine.is_organizer ? mine.notes_in : null,
     },
   };
 }
