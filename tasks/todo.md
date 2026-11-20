@@ -46,7 +46,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `lib/draw.ts`, `app/api/rooms/[code]/draw/route.ts`, `components/draw-card.tsx`,
     `tests/draw.test.ts`; modify `lib/rooms.ts`, `components/room.tsx`.
 
-- [ ] Task 9: Reveal (M)
+- [x] Task 9: Reveal (M)
   - Acceptance: only the organizer moves the reveal. "Reveal next" moves one pair. Two taps at
     the same time move one step. All members see the same pairs. After the last pair the room
     shows the ring. A December room before its date asks the organizer to confirm.
