@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node --env-file-if-exists=.env.local db/migrate.mjs",
     "db:migrate:live": "node --env-file-if-exists=.env.local db/migrate.mjs --live",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:smoke": "NEXCONN_SMOKE=1 node --env-file=.env.local node_modules/vitest/vitest.mjs run tests/nexconn.smoke.test.ts"
   },
   "dependencies": {
     "next": "16.4.6",
