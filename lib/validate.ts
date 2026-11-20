@@ -49,6 +49,15 @@ export function parseJoin(body: unknown): Parsed<{ displayName: string }> {
   return nameError ? { ok: false, fields: { displayName: nameError } } : { ok: true, value: { displayName: displayName! } };
 }
 
+/** The step is the number of pairs on the organizer's screen. A room has one pair for each member at most. */
+export function parseReveal(body: unknown): Parsed<{ step: number }> {
+  const step = (body as { step?: unknown } | null)?.step;
+  if (typeof step !== "number" || !Number.isInteger(step) || step < 0 || step > LIMITS.roomPeopleMax) {
+    return { ok: false, fields: { step: "Send the number of pairs that your screen shows." } };
+  }
+  return { ok: true, value: { step } };
+}
+
 export function parseCreateRoom(body: unknown, now: Date = new Date()): Parsed<CreateRoomInput> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return { ok: false, fields: { form: "Send the room details as one object." } };

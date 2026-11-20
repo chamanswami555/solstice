@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCreateRoom } from "@/lib/validate";
+import { parseCreateRoom, parseReveal } from "@/lib/validate";
 
 const TODAY = new Date("2026-11-20T10:00:00Z");
 const tonight = { roomName: "Office exchange 2026", displayName: "Anita", kind: "tonight" };
@@ -63,4 +63,18 @@ describe("parseCreateRoom", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(Object.keys(result.fields).sort()).toEqual(["displayName", "roomName"]);
   });
+});
+
+describe("parseReveal", () => {
+  it("accepts the step that the screen shows", () => {
+    expect(parseReveal({ step: 0 })).toEqual({ ok: true, value: { step: 0 } });
+    expect(parseReveal({ step: 40 })).toEqual({ ok: true, value: { step: 40 } });
+  });
+
+  it.each([[{}], [null], [{ step: "1" }], [{ step: -1 }], [{ step: 1.5 }], [{ step: 41 }], [{ step: Number.NaN }]])(
+    "refuses %j",
+    (body) => {
+      expect(parseReveal(body)).toMatchObject({ ok: false, fields: { step: expect.any(String) } });
+    },
+  );
 });

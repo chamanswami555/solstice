@@ -6,7 +6,8 @@ export type RoomErrorCode =
   | "IDENTITY_CAP"
   | "NOT_ORGANIZER"
   | "ALREADY_DRAWN"
-  | "TOO_FEW_MEMBERS";
+  | "TOO_FEW_MEMBERS"
+  | "NOT_DRAWN";
 
 export class RoomError extends Error {
   constructor(

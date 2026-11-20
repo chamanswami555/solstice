@@ -4,6 +4,7 @@ import { RoomError } from "@/lib/errors";
 import { newRoomCode } from "@/lib/identity";
 import { LIMITS } from "@/lib/limits";
 import { ensurePerson, type Person } from "@/lib/people";
+import type { RevealedPair } from "@/lib/reveal-rules";
 import type { CreateRoomInput, RoomKind } from "@/lib/validate";
 
 export type CreatedRoom = {
@@ -23,6 +24,8 @@ export type RoomState = {
   members: RoomMember[];
   /** After the draw: the one name this person gives to. Null for a guest and before the draw. */
   draw: { drawn: boolean; receiverName: string | null };
+  /** The pairs shown so far, in the order of the reveal. Every person in the room gets the same ones. */
+  reveal: { step: number; total: number; pairs: RevealedPair[] };
 };
 
 /** A guest joined after the draw: room talk and the reveal, and no pair. */
@@ -63,7 +66,15 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
                from pairs p
                join members giver on giver.id = p.giver_id
                join members receiver on receiver.id = p.receiver_id
-              where p.room_id = r.id and giver.person_id = $2) as receiver_name
+              where p.room_id = r.id and giver.person_id = $2) as receiver_name,
+            r.reveal_step,
+            (select count(*)::int from pairs p where p.room_id = r.id) as pair_count,
+            (select coalesce(json_agg(json_build_object('giverName', giver.display_name, 'receiverName', receiver.display_name)
+                                      order by p.position), '[]'::json)
+               from pairs p
+               join members giver on giver.id = p.giver_id
+               join members receiver on receiver.id = p.receiver_id
+              where p.room_id = r.id and p.position <= r.reveal_step) as revealed
        from rooms r
        join members m on m.room_id = r.id
       where r.code = $1
@@ -84,6 +95,7 @@ export async function getRoomState(code: string, personId: string, pool: pg.Pool
     me: member(mine),
     members: rows.rows.map(member),
     draw: { drawn: mine.drawn, receiverName: mine.receiver_name },
+    reveal: { step: mine.reveal_step, total: mine.pair_count, pairs: mine.revealed },
   };
 }
 
