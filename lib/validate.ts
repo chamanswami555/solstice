@@ -1,5 +1,7 @@
 /** Checks of request bodies. The server trusts no value before it passed one of these. */
 import { LIMITS } from "@/lib/limits";
+import type { MaskSide } from "@/lib/mask";
+import { hasBlockedWord } from "@/lib/word-list";
 
 export type RoomKind = "december" | "tonight";
 
@@ -56,6 +58,16 @@ export function parseReveal(body: unknown): Parsed<{ step: number }> {
     return { ok: false, fields: { step: "Send the number of pairs that your screen shows." } };
   }
   return { ok: true, value: { step } };
+}
+
+export function parseMaskMessage(body: unknown): Parsed<{ side: MaskSide; text: string }> {
+  const input = (body ?? {}) as { side?: unknown; text?: unknown };
+  if (input.side !== "giving" && input.side !== "receiving") return { ok: false, fields: { side: "Name the thread: giving or receiving." } };
+  const text = textOf(input.text);
+  if (!text) return { ok: false, fields: { text: "Write a message." } };
+  if (text.length > LIMITS.maskTextMax) return { ok: false, fields: { text: `Use ${LIMITS.maskTextMax} characters or fewer.` } };
+  if (hasBlockedWord(text)) return { ok: false, fields: { text: "Use kinder words. This message was not sent." } };
+  return { ok: true, value: { side: input.side, text } };
 }
 
 /** Each wish is trimmed, and an empty one is dropped. So a form with 5 fields can send all of them. */

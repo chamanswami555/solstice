@@ -10,7 +10,10 @@ export type RoomErrorCode =
   | "NOT_DRAWN"
   | "CHAT_OFF"
   | "GUEST"
-  | "WISHES_CLOSED";
+  | "WISHES_CLOSED"
+  | "NO_THREAD"
+  | "THREAD_MUTED"
+  | "RATE_LIMITED";
 
 export class RoomError extends Error {
   constructor(

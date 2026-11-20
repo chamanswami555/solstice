@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { TALK_SYSTEM_USER } from "@/lib/room-talk";
-import { signalRoom } from "@/lib/signal";
+import { signalPerson, signalRoom } from "@/lib/signal";
 import { SIGNAL_TYPE } from "@/lib/talk-rules";
 
 const keys = { appKey: "abc123def456", appSecret: "s3cr3tValue9876543210", region: "sg" as const };
@@ -61,5 +61,23 @@ describe("signalRoom", () => {
 
     expect(await signalRoom("ROOMCODE", null, send)).toBe(false);
     expect(sent).toEqual([]);
+  });
+});
+
+describe("signalPerson", () => {
+  it("sends the signal to one person only, with no sender and no thread in it", async () => {
+    const { sent, send } = transport({ code: 0, result: { messageIds: [] } });
+
+    expect(await signalPerson("ROOMCODE", "p0000000000000000000000ab", keys, send)).toBe(true);
+
+    expect(sent[0].body).toEqual({
+      fromUserId: TALK_SYSTEM_USER,
+      toChannelIds: ["ROOMCODE"],
+      toUserIds: ["p0000000000000000000000ab"],
+      messageType: SIGNAL_TYPE,
+      content: JSON.stringify({ kind: "state" }),
+      shouldPersist: 0,
+      disablePush: true,
+    });
   });
 });
