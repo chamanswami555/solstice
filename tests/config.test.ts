@@ -53,6 +53,29 @@ describe("readConfig", () => {
     expect(() => readConfig(withoutKeys)).toThrow(/NEXCONN_APP_KEY/);
   });
 
+  it("starts in production with chat switched off when CHAT=off is set", () => {
+    const config = readConfig({
+      NODE_ENV: "production",
+      DATABASE_URL: valid.DATABASE_URL,
+      SESSION_SECRET: valid.SESSION_SECRET,
+      CHAT: "off",
+    });
+
+    expect(config.nexconn).toBeNull();
+  });
+
+  it("refuses a CHAT value that is not off", () => {
+    const act = () => readConfig({ ...valid, CHAT: "on" });
+
+    expect(act).toThrow(/CHAT must be "off" or not set/);
+  });
+
+  it("refuses CHAT=off together with Nexconn keys", () => {
+    const act = () => readConfig({ ...valid, CHAT: "off" });
+
+    expect(act).toThrow(/CHAT=off and Nexconn keys are both set/);
+  });
+
   it("starts in development without the Nexconn keys, with chat switched off", () => {
     const config = readConfig({
       NODE_ENV: "development",

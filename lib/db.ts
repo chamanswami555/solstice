@@ -8,8 +8,16 @@ let pool: pg.Pool | undefined;
 
 /** One connection pool for the server process. */
 export function getPool(): pg.Pool {
-  pool ??= new pg.Pool({ connectionString: readConfig().databaseUrl, max: 5 });
+  pool ??= createPool(readConfig().databaseUrl);
   return pool;
+}
+
+export function createPool(connectionString: string): pg.Pool {
+  const created = new pg.Pool({ connectionString, max: 5 });
+  // The database can drop an idle connection (restart, scale to zero, host suspend). With no
+  // listener that event stops the whole process. The pool removes the connection by itself.
+  created.on("error", (error) => console.error("Lost an idle database connection:", error.message));
+  return created;
 }
 
 /**

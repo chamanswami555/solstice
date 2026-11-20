@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import pg from "pg";
 import { migrate } from "@/db/migrate.mjs";
-import { inTransaction } from "@/lib/db";
+import { createPool, inTransaction } from "@/lib/db";
 import { resetTestDatabase, TEST_DATABASE_URL } from "./helpers/test-database";
 
 let pool: pg.Pool;
@@ -41,5 +41,24 @@ describe("inTransaction", () => {
 
     await expect(work).rejects.toThrow("stop after the insert");
     expect(await peopleCount()).toBe(before);
+  });
+});
+
+describe("createPool", () => {
+  it("stays up and connects again after the database drops an idle connection", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const served = createPool(TEST_DATABASE_URL);
+    try {
+      const idle = (await served.query("select pg_backend_pid() as pid")).rows[0].pid;
+
+      await pool.query("select pg_terminate_backend($1)", [idle]);
+      await vi.waitFor(() => expect(logged).toHaveBeenCalledTimes(1), { timeout: 3000 });
+
+      const after = (await served.query("select pg_backend_pid() as pid")).rows[0].pid;
+      expect(after).not.toBe(idle);
+    } finally {
+      await served.end();
+      logged.mockRestore();
+    }
   });
 });
