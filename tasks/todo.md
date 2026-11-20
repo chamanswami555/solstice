@@ -98,7 +98,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 ## Phase: Secret talk (gate 2)
 
-- [ ] Task 11: Wish list (S)
+- [x] Task 11: Wish list (S)
   - Acceptance: a member writes 5 wishes at most and changes them until the reveal. The giver sees
     the wishes of the receiver after the draw. Migration 002 is applied.
   - Verify: integration tests; browser run. Dependencies: 8.
