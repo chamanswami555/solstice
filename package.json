@@ -10,6 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:migrate": "node --env-file-if-exists=.env.local db/migrate.mjs",
+    "db:migrate:live": "node --env-file-if-exists=.env.local db/migrate.mjs --live",
     "test:e2e": "playwright test"
   },
   "dependencies": {

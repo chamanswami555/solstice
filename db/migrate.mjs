@@ -3,7 +3,8 @@
  * schema_migrations, so a second run applies nothing. An advisory lock makes two runs at the same
  * time safe.
  *
- * Command line: npm run db:migrate   (reads DATABASE_URL)
+ * Command line: npm run db:migrate        (reads DATABASE_URL)
+ *               npm run db:migrate:live   (reads DATABASE_URL_DIRECT, the hosted database)
  */
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -49,10 +50,22 @@ export async function migrate(databaseUrl) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const databaseUrl = process.env.DATABASE_URL;
+  // The hosted database has its own setting, so the everyday command can never reach it by mistake.
+  const live = process.argv.includes("--live");
+  const setting = live ? "DATABASE_URL_DIRECT" : "DATABASE_URL";
+  const databaseUrl = process.env[setting];
   if (!databaseUrl) {
-    console.error("DATABASE_URL is not set. Set it in .env.local (see .env.example).");
+    console.error(`${setting} is not set. Set it in .env.local (see .env.example).`);
     process.exit(1);
+  }
+  if (live) {
+    const host = new URL(databaseUrl).host;
+    // A pooled address gives each statement another connection, and the migration lock needs one.
+    if (host.includes("-pooler")) {
+      console.error("DATABASE_URL_DIRECT is a pooled address. Use the direct address of the database.");
+      process.exit(1);
+    }
+    console.log(`Database host: ${host}`);
   }
   try {
     const applied = await migrate(databaseUrl);
