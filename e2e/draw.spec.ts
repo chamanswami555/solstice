@@ -1,24 +1,5 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
-
-const SLOW = { timeout: 15_000 };
-
-async function createRoom(page: Page, roomName: string, displayName: string): Promise<string> {
-  await page.goto("/");
-  await page.getByLabel("Room name").fill(roomName);
-  await page.getByLabel("Your display name").fill(displayName);
-  await page.getByRole("button", { name: "Create room" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(roomName);
-  return page.getByRole("textbox", { name: "Invite link" }).inputValue();
-}
-
-async function join(browser: Browser, invite: string, displayName: string): Promise<Page> {
-  const page = await (await browser.newContext()).newPage();
-  await page.goto(invite);
-  await page.getByLabel("Your display name").fill(displayName);
-  await page.getByRole("button", { name: "Join room" }).click();
-  await expect(page.getByRole("listitem").filter({ hasText: displayName })).toContainText("you");
-  return page;
-}
+import { expect, test, type Page } from "@playwright/test";
+import { createRoom, join, SLOW } from "./room-steps";
 
 const receiverOf = (page: Page) => page.locator(".drawcard__name");
 

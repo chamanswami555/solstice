@@ -14,7 +14,7 @@ export function DrawPanel({ state, onDrawn }: DrawPanelProps) {
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const { room, me, members, draw } = state;
+  const { room, me, members, draw, reveal } = state;
 
   async function drawNow() {
     setSending(true);
@@ -39,12 +39,12 @@ export function DrawPanel({ state, onDrawn }: DrawPanelProps) {
 
   if (draw.drawn) {
     return draw.receiverName ? (
-      <section className="panel panel--lit drawcard" aria-labelledby="draw-title">
+      <section className={`panel drawcard${reveal.step === 0 ? " panel--lit" : ""}`} aria-labelledby="draw-title">
         <h2 className="panel__title" id="draw-title">
           You give to
         </h2>
         <p className="drawcard__name">{draw.receiverName}</p>
-        <p className="panel__warn">Only you can see this. Keep it to yourself until the reveal.</p>
+        {reveal.step < reveal.total && <p className="panel__warn">Only you can see this. Keep it to yourself until the reveal.</p>}
       </section>
     ) : (
       <section className="panel" aria-labelledby="draw-title">

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
 import { DrawPanel } from "@/components/draw-panel";
 import { JoinForm } from "@/components/join-form";
+import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import type { RoomState } from "@/lib/rooms";
@@ -111,7 +112,9 @@ export function Room() {
     );
   }
 
-  const { room, me, members } = view.state;
+  const { room, me, members, reveal } = view.state;
+  // Before the first pair the draw card leads. From the first pair on, the reveal leads.
+  const revealPanel = <Reveal state={view.state} onMoved={reload} />;
   const inviteLink = `${window.location.origin}/r/${room.code}`;
   return (
     <div className="room">
@@ -139,7 +142,9 @@ export function Room() {
         </section>
       )}
 
+      {reveal.step > 0 && revealPanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
+      {reveal.step === 0 && revealPanel}
 
       <section className="panel" aria-labelledby="invite-title">
         <h2 className="panel__title" id="invite-title">
