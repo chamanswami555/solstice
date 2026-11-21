@@ -3,7 +3,40 @@
 A secret gift exchange for your group, in one room. Built on the Nexconn Chat SDK for the Nexconn
 Build Challenge 2026.
 
-Status: in development. The specification is in `SPEC.md`. The task plan is in `tasks/`.
+**A secret that holds:** a security test calls all 11 room routes as 8 kinds of caller (organizer,
+member, guest, outsider, removed member, unknown person, forged cookie, no cookie). A second test
+reads every answer and every page before the reveal: none links a giver to a pair.
+
+**Try it:** <https://solstice-black.vercel.app>. Alone? Tap "Try the demo room": the website plays three
+members, and the whole exchange takes about 3 minutes.
+
+![The draw card, a mask thread and the ring of a demo room, on a phone](docs/images/readme.png)
+
+## What it does
+
+1. The organizer makes a room ("Tonight round" for a party, "December room" for a later date) and
+   shares one link. Nobody makes an account.
+2. Members join with a name, talk in the room and write wish lists.
+3. The organizer draws the names. Each person sees only their own receiver, in the draw panel and as
+   a private message in room talk.
+4. Mask talk: each giver asks their receiver questions as "Your secret giver". The receiver answers.
+   Nobody learns who the giver is.
+5. The reveal: the organizer taps, and every phone shows the same pair, live, with cheers. After the last pair the
+   masks come off and the room shows the ring.
+
+## How it uses Nexconn
+
+| Product part | Nexconn feature | Code |
+| --- | --- | --- |
+| Room talk | Group channel, live messages and history | `lib/nexconn-client.ts`, `lib/room-talk.ts` |
+| Identity | Access token issue, and expiry when a member is removed | `lib/room-talk.ts` |
+| Live screens | Custom message `Solstice:Signal` from the server | `lib/signal.ts` |
+| Mask talk signal | Targeted custom message to one member, with no text and no sender | `lib/signal.ts` |
+| Draw card in room talk | Targeted custom message `Solstice:DrawCard` to one giver | `lib/signal.ts` |
+| Cheers at the reveal | Custom message `Solstice:Cheer` from the browser | `lib/nexconn-client.ts` |
+| Kind words | Profanity filter with the website's word list | `lib/word-list.ts` |
+
+The specification is in `SPEC.md`, the task plan in `tasks/`, and the write-up source in `docs/`.
 
 ## Run it on your machine
 

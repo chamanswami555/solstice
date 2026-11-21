@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Solstice write-up</title>
+<style>
+  :root {
+    --paper: #ffffff; --ink: #14281f; --muted: #4a5a52; --rule: #d9d2c4; --lit: #f6efdf; --board: #1d3a2e;
+    --font: ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  @page { size: A4; margin: 18mm 17mm 18mm 17mm; }
+  html { background: var(--paper); }
+  body { margin: 0; color: var(--ink); font: 10.5pt/1.5 var(--font); }
+  h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 4pt; }
+  h2 { font-size: 13pt; margin: 18pt 0 6pt; padding-top: 6pt; border-top: 1px solid var(--rule); break-after: avoid; }
+  h3 { font-size: 11pt; margin: 12pt 0 4pt; break-after: avoid; }
+  p, li { margin: 0 0 6pt; }
+  ul, ol { padding-left: 16pt; margin: 0 0 8pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.5pt; }
+  tr { break-inside: avoid; }
+  th, td { text-align: left; vertical-align: top; padding: 4pt 6pt; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 600; }
+  code { font: 9pt ui-monospace, Menlo, monospace; }
+  .meta { color: var(--muted); margin: 0 0 12pt; }
+  .meta td { border: 0; padding: 0 12pt 2pt 0; }
+  .lead { font-size: 12pt; margin: 8pt 0 10pt; }
+  .key { font: 600 11pt ui-monospace, Menlo, monospace; background: var(--lit); padding: 2pt 6pt; }
+  .shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8pt; margin: 6pt 0 4pt; break-inside: avoid; }
+  .shots img { width: 100%; border: 1px solid var(--rule); }
+  .caption { color: var(--muted); font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<h1>Solstice: a secret gift exchange in one room</h1>
+<table class="meta">
+  <tr><td>Event</td><td>Nexconn Build Challenge 2026</td></tr>
+  <tr><td>Live website</td><td>https://solstice-black.vercel.app</td></tr>
+  <tr><td>Repository</td><td>{{REPO_URL}}</td></tr>
+  <tr><td>Nexconn App Key</td><td><span class="key">{{APP_KEY}}</span> (data center: Singapore)</td></tr>
+  <tr><td>This document</td><td>Built {{BUILT_AT}} IST from <code>docs/write-up.html</code></td></tr>
+</table>
+
+<p class="lead">Solstice runs a secret gift exchange (a "Secret Santa") for a group of friends, a family or an office
+team. One person makes a room and shares one link. Nobody makes an account. The website draws the names,
+lets each giver ask their receiver questions through a mask, and shows the pairs one by one at the reveal,
+live, on every phone.</p>
+
+<div class="shots">
+  <img src="images/draw-card.png" alt="The draw card: you give to a named person, with their wish list">
+  <img src="images/mask-receiver.png" alt="The mask thread: a question from 'Your secret giver' and the answer">
+  <img src="images/ring.png" alt="The ring at the end of the reveal, with each gift note">
+</div>
+<p class="caption">From a demo room on a phone screen: the draw card, the mask thread on the receiver's side, and the ring after the reveal.</p>
+
+<h2>1. The problem</h2>
+<p>The name draw is the easy part of a secret gift exchange. The hard part is communication.</p>
+<ul>
+  <li>A giver wants to ask "what size?" or "do you already have this?". A direct question ends the secret.</li>
+  <li>With paper slips, a person can see the slips, and the organizer often knows every pair.</li>
+  <li>A group in different cities cannot do the reveal together in one room.</li>
+</ul>
+<p>Chat apps carry the talk, but they show who writes. Draw websites do the draw, but they have no talk.
+Solstice puts both in one room, and keeps the giver hidden until the reveal.</p>
+
+<h2>2. What the website does</h2>
+<ol>
+  <li><b>Room.</b> The organizer picks a "Tonight round" (for a party, the gift is a note or a link) or a
+  "December room" (an exchange on a later date, with a budget). The website gives an invite link.</li>
+  <li><b>Join.</b> A person opens the link and types a name. The website shows a private return link one
+  time, so the same person can come back on another device. Up to 40 people join one room.</li>
+  <li><b>Room talk.</b> Everyone in the room talks in one group chat.</li>
+  <li><b>Wish list.</b> Each member writes up to 5 wishes. Only their secret giver sees them, after the draw.</li>
+  <li><b>Draw.</b> The organizer starts the draw. The result is one ring: each person gives to the next one,
+  and nobody draws their own name. Each person sees only their own draw card, in the draw panel and as a
+  private message in room talk. The organizer does not see the pairs either.</li>
+  <li><b>Mask talk.</b> Each member has two private threads: one with their receiver, where they show as
+  "Your secret giver", and one with their own secret giver. Either side can mute a thread.</li>
+  <li><b>Nudge.</b> A member can send the group a reminder that names nobody: "Someone has a secret question waiting".</li>
+  <li><b>Reveal.</b> The organizer taps "Reveal next". Every phone shows the same pair, live, with
+  the giver's note in a tonight round. Members send cheers. After the last pair, the masks come off and
+  the room shows the ring.</li>
+  <li><b>Demo room.</b> A visitor alone (for example a judge) starts a demo room. The website plays three
+  labelled demo members, who answer the visitor's questions and write notes.</li>
+</ol>
+
+<h2>3. Nexconn Chat SDK features and where they run</h2>
+<p>Package: <code>@nexconn/chat</code> 26.5.1 (Chat SDK for Web) in the browser, and the Nexconn Platform
+Chat API from our server with signed requests. Every row below has a test that ran against the real
+Nexconn app (the smoke tests and the room talk browser test).</p>
+<table>
+  <tr><th>Product part</th><th>Nexconn feature</th><th>Where in the code</th></tr>
+  <tr><td>Room talk</td><td>Group channel, live messages and message history</td><td>Browser: <code>lib/nexconn-client.ts</code>. Server makes the channel and adds the member: <code>lib/room-talk.ts</code></td></tr>
+  <tr><td>Identity</td><td>Access token issue; token expiry when the organizer removes a member</td><td>Server: <code>lib/room-talk.ts</code></td></tr>
+  <tr><td>Live screens</td><td>Custom message <code>Solstice:Signal</code> from the server: "load the state again". It carries no room data</td><td>Server: <code>lib/signal.ts</code>; browser: <code>lib/nexconn-client.ts</code></td></tr>
+  <tr><td>Mask talk signal</td><td>Targeted custom message: only the other person of the pair gets it, with no text and no sender</td><td>Server: <code>lib/signal.ts</code></td></tr>
+  <tr><td>Draw card in room talk</td><td>Targeted custom message <code>Solstice:DrawCard</code> to one giver; the browser accepts it only from the website's own user</td><td>Server: <code>lib/signal.ts</code>; browser: <code>lib/nexconn-client.ts</code></td></tr>
+  <tr><td>Cheers at the reveal</td><td>Custom message <code>Solstice:Cheer</code> sent from the browser</td><td>Browser: <code>lib/nexconn-client.ts</code>, <code>components/reveal.tsx</code></td></tr>
+  <tr><td>Kind words in room talk</td><td>Profanity filter with the website's word list; the chat service drops a listed word itself</td><td>Word list: <code>lib/word-list.ts</code></td></tr>
+</table>
+<p><b>Speed of the reveal.</b> In 5 runs of the room talk test on 21 November, from a computer in India to the
+Nexconn data center in Singapore, a reveal step showed on another browser 1.25 to 3.3 seconds after the server
+answer. The middle value was 1.27 seconds. The live server runs in Singapore; its own speed is not measured here.</p>
+
+<h2>4. How the secret stays secret</h2>
+<ul>
+  <li>The name of a giver leaves the database only for that giver, or after the last pair of the reveal.
+  The rule is in the SQL query itself (<code>lib/mask.ts</code>), not in the screen.</li>
+  <li>Every answer of the server has an allow-list of fields. A browser test reads every answer and every page
+  before the reveal and finds no link from a giver to a pair.</li>
+  <li>Mask signals go only to the other person of the pair, and carry no text and no sender. A test reads
+  the frames that the chat service sends to a third member and finds no signal there.</li>
+  <li>A security matrix test calls every route as the organizer, a member, a guest, an outsider, a removed
+  member, an unknown person, a forged cookie and no cookie, and checks each answer.</li>
+  <li>The identity is a signed cookie, so nobody signs up and nobody can forge another person.</li>
+</ul>
+
+<h2>5. Built to keep working</h2>
+<ul>
+  <li>The draw, the mask talk and the reveal need no chat. If the chat service does not answer, the room still
+  works and says that room talk is not available. A drill with a refusing chat service proved this.</li>
+  <li>The data is in PostgreSQL. Each user action is one transaction, and database constraints and row locks
+  stop double draws, double reveal steps and races at the room limits.</li>
+  <li>Limits stop abuse: 10 new rooms and 60 new people for each network address in an hour, 20 mask messages
+  for each member in a minute, 300 stored messages in one mask thread, and no new mask message when the
+  database is near its size limit. The health address checks the database.</li>
+  <li>Tests at the time of writing: 335 unit and integration tests, 54 browser tests, and the real-chat tests above.</li>
+</ul>
+
+<h2>6. Traction</h2>
+<p>Counts from the public usage page of the live website (https://solstice-black.vercel.app/usage) at {{USAGE_AT}} IST.
+Each person who opens a room connects to the Nexconn app, so these people count as active users of the App Key.
+Our own tests also connect a small number of test users to the same app; the counts below are from the live
+database only and include no test user.</p>
+{{USAGE_TABLE}}
+
+<h2>7. Where it can go</h2>
+<ul>
+  <li>Office teams and families run an exchange every December. A free room with a paid "office pack"
+  (one room for many teams, a company budget, a calendar date) is a clear first product.</li>
+  <li>The same mask pattern fits other "talk without names" moments: a mentor match, a team kudos round.</li>
+  <li>Next items that are designed and not built: translation of room talk, rules such as "these two people
+  must not draw each other", and removal of a member after the draw with a repair of the ring.</li>
+</ul>
+
+<h2>8. Terminology</h2>
+<table>
+  <tr><th>Term</th><th>Meaning in this document</th></tr>
+  <tr><td>Giver, receiver</td><td>In a pair, the giver gives a gift to the receiver</td></tr>
+  <tr><td>Ring</td><td>The draw result: each member gives to the next member in a shuffled order</td></tr>
+  <tr><td>Draw card</td><td>The private notice "You give to (name)"</td></tr>
+  <tr><td>Mask talk</td><td>A private thread where the giver shows as "Your secret giver"</td></tr>
+  <tr><td>Group channel</td><td>A Nexconn chat of many users</td></tr>
+  <tr><td>Targeted message</td><td>A group message that only named members receive</td></tr>
+  <tr><td>Custom message</td><td>A Nexconn message with our own type and fields</td></tr>
+  <tr><td>Signal</td><td>A message that tells a browser to load new state from our server</td></tr>
+  <tr><td>Access token</td><td>What a browser needs to connect as one Nexconn user. Our server issues it</td></tr>
+  <tr><td>Active user</td><td>A person who connected to the Nexconn app in the month</td></tr>
+</table>
+
+</body>
+</html>
