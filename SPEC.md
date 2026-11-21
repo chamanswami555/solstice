@@ -267,7 +267,7 @@ last to the first. Gates 1, 2, 3 and 5 are the product. Real groups start when g
    for each identity (it can restart), 20 mask messages for each member in a minute. A test checks
    each limit.
 8. (gate 3) A user can do every action with the keyboard only. Text contrast is 4.5 to 1 or more, computed.
-9. (gate 2) The health URL answers. After 30 minutes with no request, a new visitor sees the first
+9. (gate 2) The health URL answers: 200 when the database answers, 503 when it does not. After 30 minutes with no request, a new visitor sees the first
    screen within 3 seconds.
 10. (gate 3) The usage page shows counts by kind of room, with demo rooms apart.
 11. (gate 1) A person who opens the return link on a second device has the same identity, and sees
