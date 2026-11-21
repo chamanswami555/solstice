@@ -82,7 +82,7 @@ Goal: real groups finish a tonight round before the deadline, and December rooms
    "Tonight round". The website shows an invite link and the organizer's return link.
 2. Join. A person opens the invite link and enters a display name. The website shows a private
    return link one time. The return link opens the same identity on a second device.
-3. Room talk. All members talk in one room channel. Before the draw, they see who is online.
+3. Room talk. All members talk in one room channel.
 4. Wish list. Each member writes 5 wishes at most. A member can change wishes until the reveal.
 5. Draw. The organizer starts the draw. Each member sees a draw card: "You give to (name)".
    With exactly 3 members the website says: "With 3 people you can work out your giver. Invite a 4th."
@@ -160,7 +160,6 @@ secret. The secret is in the URL fragment.
 | Product part | Nexconn feature | Sent by |
 | --- | --- | --- |
 | Room talk | Group channel, message history | Browser, SDK |
-| Online members before the draw | Online status subscription | Browser, SDK |
 | Live signal for mask talk | Targeted custom message in the group channel | Server, received by the SDK |
 | Draw card in the room talk | Targeted message in the group channel | Server, received by the SDK |
 | Draw, reveal step, removal | Custom message in the group channel, used as a signal | Server |
@@ -199,7 +198,7 @@ Each row is a claim. A test must run before the row goes into the write-up.
 
 | Risk or limit | Mitigation | Where checked |
 | --- | --- | --- |
-| A receiver learns the giver before the reveal | Mask signals carry no text and no sender, allow-listed response fields, online status off after the draw | Browser test, criterion 2 |
+| A receiver learns the giver before the reveal | Mask signals carry no text and no sender, allow-listed response fields | Browser test, criterion 2 |
 | Abuse in mask talk | Mute, word list, rate limit, "Your name is shown at the reveal" | Integration tests |
 | A signal send fails after the database commit | State comes from the server on load. The browser also loads state every 10 seconds on the room screen | Browser test |
 | The free Nexconn plan stops new connections at 2,000 monthly active users | A cap on the total number of identities from gate 1. The owner claims the Chat Growth Credit before gate 2 | Open items |
@@ -294,6 +293,8 @@ Video script, about 2 minutes:
 
 - Gift helper with an outside model, and streaming messages for its answers: first item after gate 4,
   with the owner's approval and key.
+- Online members before the draw (gate 4, cut on 21 November): built, but the chat service refuses the
+  subscription with code 26020 (service not switched on for the app). Its Console switch was not found.
 - Translation of room talk: the free allowance is 50,000 characters.
 - Removal after the draw, with a repair of the ring.
 - Rules such as "these two people must not draw each other".

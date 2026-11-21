@@ -147,7 +147,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 ### Checkpoint: Gate 2
 - [ ] Criteria 1, 2, 4 and 9 hold on the public URL. Four real people finish a tonight round.
-- [ ] The owner claims the Chat Growth Credit. Real groups start.
+- [ ] The owner claims the Chat Growth Credit (done: the owner reports the 10K plan in use). Real groups start.
 
 ## Phase: Judge and safety (gate 3)
 
@@ -193,7 +193,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 - [x] Task 19a: Nudge button with a text that names nobody (S). Files: `components/nudge.tsx`.
 - [x] Task 19b: Cheers at the reveal as custom messages (S). Files: `components/reveal.tsx`.
-- [ ] Task 19c: Online status before the draw, off after it (S). Files: `components/room.tsx`.
+- [ ] Task 19c (CUT on 21 November: the chat service refuses with code 26020, Console switch not found; code kept on the local branch online-status): Online status before the draw, off after it (S). Files: `components/room.tsx`.
 - [x] Task 19d: Draw card in room talk as a targeted message (S). Files: `lib/signal.ts`.
 - [x] Task 19e: Longer demo script (S). Files: `lib/demo.ts`.
   - Each item: it works alone in a browser run, or it is removed, not left half done.
