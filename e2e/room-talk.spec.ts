@@ -129,6 +129,27 @@ test("a join, the draw, a reveal step and a mask message reach another browser w
   await anita.getByRole("button", { name: "Draw names" }).click();
   const drawMs = await shownAfter(anita, "/draw", () => anita.getByRole("button", { name: "Yes, draw" }).click(), rohan.locator(".drawcard__name"));
 
+  // The draw card in room talk: a targeted message from the website. Each person gets only their own.
+  for (const person of [anita, rohan, meera]) {
+    const receiver = (await person.locator(".drawcard .drawcard__name").textContent())!;
+    const cards = messages(person).filter({ hasText: "Your draw card" });
+    await expect(cards).toHaveCount(1, { timeout: SIGNAL_LIMIT_MS });
+    // The row is the sender's name next to the text, with no space between the two parts.
+    await expect(cards).toHaveText(`SolsticeYour draw card: you give to ${receiver}. Only you see this message.`);
+  }
+  // A card that a member sends is not a card: only the website's own user can send one.
+  await nexconnCall("/v4/group-channel/message/send", {
+    fromUserId: ROHAN,
+    toChannelIds: [ROOM],
+    toUserIds: [ANITA],
+    messageType: "Solstice:DrawCard",
+    content: JSON.stringify({ receiverName: "Kabir" }),
+    shouldPersist: 0,
+  });
+  await anita.waitForTimeout(3000);
+  await expect(messages(anita).filter({ hasText: "Your draw card" })).toHaveCount(1);
+  await expect(messages(anita).filter({ hasText: "Kabir" })).toHaveCount(0);
+
   const revealMs = await shownAfter(anita, "/reveal", () => anita.getByRole("button", { name: "Reveal next" }).click(), rohan.getByRole("heading", { name: "Pair 1 of 3" }));
   await expect(meera.getByRole("heading", { name: "Pair 1 of 3" })).toBeVisible({ timeout: REVEAL_LIMIT_MS + 1000 });
 

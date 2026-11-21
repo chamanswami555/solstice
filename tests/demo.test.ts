@@ -75,10 +75,12 @@ describe("a demo room plays the other members", () => {
   it("draws with the visitor in the ring, and gives each demo giver a note", async () => {
     const demo = await startDemoRoom(null, pool);
 
-    await drawRoom(demo.code, demo.personId, pool);
+    const cards = await drawRoom(demo.code, demo.personId, pool);
 
     const state = (await getRoomState(demo.code, demo.personId, pool))!;
     expect(DEMO_MEMBERS.map((member) => member.name)).toContain(state.draw.receiverName);
+    // Demo members have no chat identity: only the visitor gets a draw card in room talk.
+    expect(cards).toEqual([{ personId: demo.personId, receiverName: state.draw.receiverName }]);
     expect(state.wishes.receiver).toEqual(DEMO_MEMBERS.find((member) => member.name === state.draw.receiverName)!.wishes);
     expect(state.note).toEqual({ mine: null, open: true, notesIn: 3 });
   });

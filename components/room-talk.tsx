@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { LIMITS } from "@/lib/limits";
 import { connectRoomTalk, type RoomTalk as Connection, type TalkMessage } from "@/lib/nexconn-client";
+import { BRAND } from "@/lib/brand";
 import type { RoomMember } from "@/lib/rooms";
+import { TALK_SYSTEM_USER } from "@/lib/talk-rules";
 import { hasBlockedWord } from "@/lib/word-list";
 
 type RoomTalkProps = {
@@ -104,7 +106,7 @@ export function RoomTalk({ code, me, members, onSignal, onCheer, onCheerReady }:
             {messages.map((message) => (
               <li className="talk__row" key={message.id}>
                 <span className="talk__name">
-                  {message.senderId === me.talkId ? "You" : (nameOf.get(message.senderId) ?? "Someone who left")}
+                  {message.senderId === me.talkId ? "You" : message.senderId === TALK_SYSTEM_USER ? BRAND.name : (nameOf.get(message.senderId) ?? "Someone who left")}
                 </span>
                 <span className="talk__text">{message.text}</span>
               </li>

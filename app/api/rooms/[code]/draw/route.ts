@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { currentPersonId } from "@/lib/current-person";
 import { drawRoom } from "@/lib/draw";
 import { fail, readJson, serverError } from "@/lib/http";
-import { signalRoom } from "@/lib/signal";
+import { sendDrawCards, signalRoom } from "@/lib/signal";
 
 /** The organizer draws the names. A room has one draw: a second request gets status 409. */
 export async function POST(request: Request, { params }: { params: Promise<{ code: string }> }): Promise<Response> {
@@ -13,9 +13,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
 
   try {
     const { code } = await params;
-    await drawRoom(code, personId);
-    // The other browsers in the room load the new state. The signal goes out after the answer.
-    after(() => signalRoom(code));
+    const cards = await drawRoom(code, personId);
+    // After the answer: the other browsers load the new state, and each giver gets their card in room talk.
+    after(async () => {
+      await signalRoom(code);
+      await sendDrawCards(code, cards);
+    });
     return Response.json({ drawn: true }, { status: 201 });
   } catch (error) {
     return serverError(error);

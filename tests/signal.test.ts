@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { TALK_SYSTEM_USER } from "@/lib/room-talk";
-import { signalPerson, signalRoom } from "@/lib/signal";
-import { SIGNAL_TYPE } from "@/lib/talk-rules";
+import { sendDrawCards, signalPerson, signalRoom } from "@/lib/signal";
+import { DRAW_CARD_TYPE, SIGNAL_TYPE } from "@/lib/talk-rules";
 
 const keys = { appKey: "abc123def456", appSecret: "s3cr3tValue9876543210", region: "sg" as const };
 
@@ -79,5 +79,53 @@ describe("signalPerson", () => {
       shouldPersist: 0,
       disablePush: true,
     });
+  });
+});
+
+describe("sendDrawCards", () => {
+  const cards = [
+    { personId: "pAnita", receiverName: "Rohan" },
+    { personId: "pRohan", receiverName: "Anita" },
+  ];
+
+  it("sends each giver one targeted message with only that giver's receiver", async () => {
+    const { sent, send } = transport({ code: 0, result: { messageIds: [] } });
+
+    expect(await sendDrawCards("ROOMCODE", cards, keys, send)).toBe(2);
+
+    expect(sent.map((call) => call.body)).toEqual(
+      cards.map((card) => ({
+        fromUserId: TALK_SYSTEM_USER,
+        toChannelIds: ["ROOMCODE"],
+        toUserIds: [card.personId],
+        messageType: DRAW_CARD_TYPE,
+        content: JSON.stringify({ receiverName: card.receiverName }),
+        shouldPersist: 0,
+      })),
+    );
+    expect(new Set(sent.map((call) => call.path))).toEqual(new Set(["/v4/group-channel/message/send"]));
+  });
+
+  it("sends the next card when the chat service refuses one, and never throws", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const answers = [{ code: 25410 }, { code: 0, result: { messageIds: [] } }];
+    const sent: unknown[] = [];
+    const send = (async (_url: string | URL | Request, init?: RequestInit) => {
+      sent.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify(answers.shift()), { status: 200 });
+    }) as typeof fetch;
+
+    expect(await sendDrawCards("ROOMCODE", cards, keys, send)).toBe(1);
+
+    expect(sent).toHaveLength(2);
+    expect(logged).toHaveBeenCalledTimes(1);
+    logged.mockRestore();
+  });
+
+  it("sends nothing when chat is switched off", async () => {
+    const { sent, send } = transport({ code: 0 });
+
+    expect(await sendDrawCards("ROOMCODE", cards, null, send)).toBe(0);
+    expect(sent).toEqual([]);
   });
 });

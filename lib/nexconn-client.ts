@@ -1,7 +1,7 @@
 /** The browser side of room talk. The Chat SDK is loaded only when a room opens its talk. */
 import type { NexconnRegion } from "@/lib/config";
 import type { TalkAccess } from "@/lib/room-talk";
-import { CHEER_TYPE, parseCheerStep, SIGNAL_TYPE } from "@/lib/talk-rules";
+import { CHEER_TYPE, DRAW_CARD_TYPE, parseCheerStep, parseDrawCard, SIGNAL_TYPE, TALK_SYSTEM_USER } from "@/lib/talk-rules";
 
 export type TalkMessage = { id: string; senderId: string; text: string; sentAt: number };
 export type RoomTalk = {
@@ -39,15 +39,23 @@ export async function connectRoomTalk(
     NCEngine.registerCustomMessages([
       { messageType: SIGNAL_TYPE, isPersisted: false, isCounted: false },
       { messageType: CHEER_TYPE, isPersisted: false, isCounted: false },
+      { messageType: DRAW_CARD_TYPE, isPersisted: false, isCounted: false },
     ]);
     initialized = true;
   }
 
-  type SdkMessage = { messageId: string; messageType: string; senderUserId: string; sentTime: number; content: { text?: unknown; step?: unknown }; channelIdentifier: { channelId: string } };
+  type SdkMessage = { messageId: string; messageType: string; senderUserId: string; sentTime: number; content: { text?: unknown; step?: unknown; receiverName?: unknown }; channelIdentifier: { channelId: string } };
+  // A draw card counts only from the website's own user: a member could send a message of that type too.
+  const textOf = (message: SdkMessage): string | null => {
+    if (message.messageType === TEXT_MESSAGE) return String(message.content.text ?? "");
+    const receiver = message.messageType === DRAW_CARD_TYPE && message.senderUserId === TALK_SYSTEM_USER ? parseDrawCard(message.content) : null;
+    return receiver && `Your draw card: you give to ${receiver}. Only you see this message.`;
+  };
   const ofThisRoom = (messages: SdkMessage[]): TalkMessage[] =>
-    messages
-      .filter((message) => message.messageType === TEXT_MESSAGE && message.channelIdentifier.channelId === access.channelId)
-      .map((message) => ({ id: message.messageId, senderId: message.senderUserId, text: String(message.content.text ?? ""), sentAt: message.sentTime }));
+    messages.flatMap((message) => {
+      const text = message.channelIdentifier.channelId === access.channelId ? textOf(message) : null;
+      return text === null ? [] : [{ id: message.messageId, senderId: message.senderUserId, text, sentAt: message.sentTime }];
+    });
 
   const cheersIn = (messages: SdkMessage[]) => {
     for (const message of messages) {

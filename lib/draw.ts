@@ -36,12 +36,16 @@ export function drawPairs(memberIds: readonly number[]): Pair[] {
   }));
 }
 
+/** What one real giver learns at the draw. Only that giver may see it. */
+export type DrawCard = { personId: string; receiverName: string };
+
 /**
  * The organizer draws the names. The row lock on the room is the same lock that a join takes, so
  * no member can land inside a draw. The primary key of `draws` refuses a second draw in any case.
+ * Returns the draw card of each real giver, for room talk.
  */
-export async function drawRoom(code: string, personId: string, pool: pg.Pool = getPool()): Promise<void> {
-  await inTransaction(async (db) => {
+export async function drawRoom(code: string, personId: string, pool: pg.Pool = getPool()): Promise<DrawCard[]> {
+  return inTransaction(async (db) => {
     const room = await db.query(
       `select r.id, r.kind, r.organizer_id = $2 as is_organizer,
               exists (select 1 from members m where m.room_id = r.id and m.person_id = $2) as is_inside
@@ -65,5 +69,16 @@ export async function drawRoom(code: string, personId: string, pool: pg.Pool = g
       [roomId, pairs.map((pair) => pair.giverId), pairs.map((pair) => pair.receiverId), pairs.map((pair) => pair.position)],
     );
     if (room.rows[0].kind === "demo") await seedDemoAfterDraw(db, roomId);
+    // The cards for room talk: one for each real giver. Demo members have no chat identity.
+    const cards = await db.query(
+      `select giver.person_id, receiver.display_name as receiver_name
+         from pairs p
+         join members giver on giver.id = p.giver_id
+         join members receiver on receiver.id = p.receiver_id
+        where p.room_id = $1 and not giver.is_demo
+        order by p.position`,
+      [roomId],
+    );
+    return cards.rows.map((row) => ({ personId: row.person_id, receiverName: row.receiver_name }));
   }, pool);
 }

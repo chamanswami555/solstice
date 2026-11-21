@@ -3,12 +3,14 @@ import { readConfig, type Config, type NexconnRegion } from "@/lib/config";
 import { getPool } from "@/lib/db";
 import { RoomError } from "@/lib/errors";
 import { nexconnCall, NexconnError } from "@/lib/nexconn-server";
+import { TALK_SYSTEM_USER } from "@/lib/talk-rules";
+
+export { TALK_SYSTEM_USER };
 
 /** What the browser needs to connect to the talk of one room. The App Key is public by design. */
 export type TalkAccess = { appKey: string; region: NexconnRegion; userId: string; token: string; channelId: string };
 
-/** Owner of every room channel. No member owns a channel, so a member who leaves changes nothing. */
-export const TALK_SYSTEM_USER = "solsticeSystem";
+// TALK_SYSTEM_USER owns every room channel. No member owns one, so a member who leaves changes nothing.
 
 // Answers of Nexconn for a channel id, seen in the smoke test on the real app.
 const CHANNEL_MISSING = 25410;

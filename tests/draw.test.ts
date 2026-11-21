@@ -124,6 +124,15 @@ describe("drawRoom", () => {
     expect(receivers.sort()).toEqual(["Anita", "Kabir", "Meera", "Rohan"]);
   });
 
+  it("returns one draw card for each giver, with the same receiver that the giver's room state shows", async () => {
+    const { code, people } = await roomWith(["Rohan", "Meera", "Kabir"]);
+
+    const cards = await drawRoom(code, people.Anita, pool);
+
+    expect(cards.map((card) => card.personId).sort()).toEqual(Object.values(people).sort());
+    for (const card of cards) expect(card.receiverName).toBe((await getRoomState(code, card.personId, pool))!.draw.receiverName);
+  });
+
   it("shows no receiver before the draw", async () => {
     const { code, people } = await roomWith(["Rohan", "Meera"]);
 

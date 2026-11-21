@@ -194,7 +194,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 - [x] Task 19a: Nudge button with a text that names nobody (S). Files: `components/nudge.tsx`.
 - [x] Task 19b: Cheers at the reveal as custom messages (S). Files: `components/reveal.tsx`.
 - [ ] Task 19c: Online status before the draw, off after it (S). Files: `components/room.tsx`.
-- [ ] Task 19d: Draw card in room talk as a targeted message (S). Files: `lib/signal.ts`.
+- [x] Task 19d: Draw card in room talk as a targeted message (S). Files: `lib/signal.ts`.
 - [ ] Task 19e: Longer demo script (S). Files: `lib/demo.ts`.
   - Each item: it works alone in a browser run, or it is removed, not left half done.
 
