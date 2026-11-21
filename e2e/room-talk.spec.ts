@@ -57,7 +57,8 @@ const messages = (page: Page) => page.getByRole("log", { name: "Messages" }).get
 test.beforeAll(async () => {
   const db = new pg.Client({ connectionString: TEST_DATABASE_URL });
   await db.connect();
-  await db.query("insert into people (id, return_hash) values ($1, $2), ($3, $4), ($5, $6)", [
+  // A worker that starts again after a failure finds the people in place.
+  await db.query("insert into people (id, return_hash) values ($1, $2), ($3, $4), ($5, $6) on conflict (id) do nothing", [
     ANITA, hashReturnSecret("e2e-anita"), ROHAN, hashReturnSecret("e2e-rohan"), MEERA, hashReturnSecret("e2e-meera"),
   ]);
   const room = await db.query("insert into rooms (code, name, kind, organizer_id) values ($1, 'Office exchange 2026', 'tonight', $2) returning id", [ROOM, ANITA]);
