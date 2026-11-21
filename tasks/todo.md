@@ -187,7 +187,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Files: create `e2e/keyboard.spec.ts`; modify `app/globals.css` where a check fails.
 
 ### Checkpoint: Gate 3
-- [ ] Criteria 5, 7, 8 and 10 hold. Security review of the routes. Failure-mode checkpoint written.
+- [x] Criteria 5, 7, 8 and 10 hold. Security review of the routes. Failure-mode checkpoint written.
 
 ## Phase: Extras (gate 4). Cut from the bottom up.
 
