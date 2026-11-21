@@ -1,13 +1,13 @@
 import { currentPersonId, rememberPerson } from "@/lib/current-person";
 import { fail, readJson, serverError } from "@/lib/http";
-import { mayMakeRoom, TOO_MANY_ROOMS } from "@/lib/rate";
+import { mayMakePerson, mayMakeRoom, TOO_MANY_PEOPLE, TOO_MANY_ROOMS } from "@/lib/rate";
 import { createRoom } from "@/lib/rooms";
 import { parseCreateRoom } from "@/lib/validate";
 
 /**
  * Creates a room. The caller becomes its organizer and first member.
  * Not safe to retry: a second request makes a second room.
- * Status 429 after 10 rooms from one client address in one hour.
+ * Status 429 after 10 rooms from one client address in one hour, or after 60 new people from it.
  */
 export async function POST(request: Request): Promise<Response> {
   const read = await readJson(request);
@@ -19,6 +19,7 @@ export async function POST(request: Request): Promise<Response> {
   const personId = await currentPersonId();
   try {
     if (!(await mayMakeRoom(request))) return fail(429, "RATE_LIMITED", TOO_MANY_ROOMS);
+    if (!(await mayMakePerson(request, personId))) return fail(429, "RATE_LIMITED", TOO_MANY_PEOPLE);
     const created = await createRoom(parsed.value, personId);
     await rememberPerson(created.personId);
     return Response.json({ room: { code: created.code }, returnSecret: created.returnSecret }, { status: 201 });

@@ -10,6 +10,8 @@ export const LIMITS = {
   roomPeopleMax: 40,
   /** New rooms, demo rooms too, from one client address in one hour. */
   roomsPerHour: 10,
+  /** New people (requests with no identity cookie that can make one) from one client address in one hour. A party of 40 on one network fits. */
+  newPeoplePerHour: 60,
   talkTextMax: 500,
   wishesMax: 5,
   wishTextMax: 120,

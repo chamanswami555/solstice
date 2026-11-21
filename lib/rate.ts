@@ -44,3 +44,16 @@ export async function mayMakeRoom(request: Request): Promise<boolean> {
 }
 
 export const TOO_MANY_ROOMS = "You made many rooms in a short time. Try again in an hour.";
+
+/**
+ * True when this request may make one more person. A caller with an identity cookie makes no new
+ * person, so it is not counted (the cookie is signed, so it cannot be made up). A request with no
+ * cookie counts against the limit of new people for its client address in this hour.
+ */
+export async function mayMakePerson(request: Request, personId: string | null): Promise<boolean> {
+  if (personId) return true;
+  const key = clientKey(request, "people", readConfig().sessionSecret);
+  return key === null || takeRateSlot(getPool(), key, LIMITS.newPeoplePerHour, 3600);
+}
+
+export const TOO_MANY_PEOPLE = "Many new people came from your network in a short time. Try again in an hour.";
