@@ -195,6 +195,60 @@ describe("mask talk", () => {
 
     expect(await post).toBe("RATE_LIMITED");
   });
+
+  /** Fills the thread where `giverName` gives, as if both sides wrote over many minutes. */
+  async function fillThread(code: string, giverPersonId: string, count: number, db: Pick<pg.Pool, "query"> = pool): Promise<void> {
+    await db.query(
+      `insert into mask_messages (room_id, giver_id, from_giver, body, created_at)
+       select m.room_id, m.id, n % 2 = 0, 'filler', now() - interval '1 hour'
+         from members m join rooms r on r.id = m.room_id, generate_series(1, $3) n
+        where r.code = $1 and m.person_id = $2`,
+      [code, giverPersonId, count],
+    );
+  }
+
+  it(`stores ${LIMITS.maskThreadMax} messages in one thread and refuses the next one from either side`, async () => {
+    const { code, people, receiverOf } = await drawnRoom();
+    await fillThread(code, people.Anita, LIMITS.maskThreadMax - 1);
+
+    expect(await outcome(postMaskMessage(code, people.Anita, "giving", "The last place", pool))).toBe("done");
+    expect(await outcome(postMaskMessage(code, people[receiverOf.Anita], "receiving", "One too many", pool))).toBe("THREAD_FULL");
+    expect(await outcome(postMaskMessage(code, people.Anita, "giving", "One too many", pool))).toBe("THREAD_FULL");
+    expect(await outcome(postMaskMessage(code, people.Anita, "receiving", "The other thread is open", pool))).toBe("done");
+  });
+
+  it("waits for the lock on the thread, so the two sides cannot both take its last place", async () => {
+    const { code, people, receiverOf } = await drawnRoom();
+    await fillThread(code, people.Anita, LIMITS.maskThreadMax - 1);
+    const receiver = people[receiverOf.Anita];
+    // The receiver's post holds the thread until it commits. Anita's post must wait and then count it.
+    const holder = await pool.connect();
+    await holder.query("begin");
+    await holder.query("select 1 from pairs p join members m on m.id = p.giver_id where m.person_id = $1 for update of p", [people.Anita]);
+
+    const post = outcome(postMaskMessage(code, people.Anita, "giving", "The last place", pool));
+    await waitForLockWaiter();
+    await fillThread(code, people.Anita, 1, holder);
+    await holder.query("commit");
+    holder.release();
+
+    expect(await post).toBe("THREAD_FULL");
+    expect(await outcome(postMaskMessage(code, receiver, "receiving", "Still full", pool))).toBe("THREAD_FULL");
+  });
+
+  it("stores no mask message while the database is above its size limit", async () => {
+    const { code, people } = await drawnRoom();
+    const limits = LIMITS as { maskStopDatabaseBytes: number };
+    const saved = limits.maskStopDatabaseBytes;
+    limits.maskStopDatabaseBytes = 1;
+    try {
+      expect(await outcome(postMaskMessage(code, people.Anita, "giving", "Hello", pool))).toBe("STORAGE_FULL");
+      expect((await pool.query("select count(*)::int as n from mask_messages")).rows[0].n).toBe(0);
+    } finally {
+      limits.maskStopDatabaseBytes = saved;
+    }
+    expect(await outcome(postMaskMessage(code, people.Anita, "giving", "Hello", pool))).toBe("done");
+  });
 });
 
 describe("mute", () => {

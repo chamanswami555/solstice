@@ -21,6 +21,10 @@ export const LIMITS = {
   maskPerMinute: 20,
   /** The newest messages of a thread that a browser gets. */
   maskHistory: 200,
+  /** Stored messages of one thread, both sides together. */
+  maskThreadMax: 300,
+  /** Above this database size no new mask message is stored, so the free database (1 GB) never fills. */
+  maskStopDatabaseBytes: 800 * 1024 * 1024,
   /** Total identities, below the 2,000 monthly active users of the free Nexconn plan. */
   identityCap: 1800,
   /** A December room cannot be planned further ahead than this. */

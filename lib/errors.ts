@@ -13,6 +13,8 @@ export type RoomErrorCode =
   | "WISHES_CLOSED"
   | "NO_THREAD"
   | "THREAD_MUTED"
+  | "THREAD_FULL"
+  | "STORAGE_FULL"
   | "RATE_LIMITED"
   | "NOT_YOUR_MUTE"
   | "NO_NOTES"

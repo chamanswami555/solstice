@@ -91,12 +91,28 @@ export async function postMaskMessage(
         `select p.giver_id, p.muted_by, other.person_id as other_person, other.is_demo as other_is_demo
            from pairs p
            join members other on other.id = case when $3 then p.receiver_id else p.giver_id end
-          where p.room_id = $1 and case when $3 then p.giver_id else p.receiver_id end = $2`,
+          where p.room_id = $1 and case when $3 then p.giver_id else p.receiver_id end = $2
+            for update of p`,
         [me.room_id, me.id, iGive],
       )
     ).rows[0];
     if (!pair) throw new RoomError("NO_THREAD", "You have no thread on this side. Threads open after the draw.");
     if (pair.muted_by !== null) throw new RoomError("THREAD_MUTED", "This thread is muted.");
+
+    // The lock on the pair row puts the posts of both sides in a line, so the thread count is exact.
+    const stored = (
+      await db.query("select count(*)::int as messages, pg_database_size(current_database()) as bytes from mask_messages where room_id = $1 and giver_id = $2", [
+        me.room_id,
+        pair.giver_id,
+      ])
+    ).rows[0];
+    if (stored.bytes >= LIMITS.maskStopDatabaseBytes) {
+      throw new RoomError("STORAGE_FULL", "Mask talk is paused on this website for now. Your threads are safe. Try again later.");
+    }
+    const adding = pair.other_is_demo && iGive ? 2 : 1;
+    if (stored.messages + adding > LIMITS.maskThreadMax) {
+      throw new RoomError("THREAD_FULL", `This thread is full. It keeps ${LIMITS.maskThreadMax} messages.`);
+    }
 
     const recent = await db.query(
       `select count(*)::int as sent
