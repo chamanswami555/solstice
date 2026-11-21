@@ -17,8 +17,19 @@ export const DEMO_ROOM_NAME = "Demo room";
 export const DEMO_VISITOR_NAME = "Visitor";
 /** What the visitor's secret giver asks. It is in the thread from the draw on. */
 export const DEMO_QUESTION = "Demo question from your secret giver: tea or coffee?";
-/** What a demo member answers to any question of the visitor. */
-export const DEMO_REPLY = "Demo answer: thank you for asking. Something small and warm is right for me.";
+/** What the visitor's demo receiver answers, one line for each question in order. The last line stays. */
+export const DEMO_REPLIES = [
+  "Demo answer: thank you for asking. Something small and warm is right for me.",
+  "Demo answer: blue or green. Medium, if it is something to wear.",
+  "Demo answer: no more hints. Surprise me at the reveal!",
+] as const;
+/** What the visitor's demo secret giver answers to the visitor. */
+export const DEMO_GIVER_REPLY = "Demo answer from your secret giver: noted. You will know who I am at the reveal.";
+
+/** The demo receiver's answer to the visitor's question number `asked`, counted from 1. */
+export function demoReply(asked: number): string {
+  return DEMO_REPLIES[Math.min(asked, DEMO_REPLIES.length) - 1];
+}
 
 type Queryable = Pick<pg.Pool | pg.PoolClient, "query">;
 

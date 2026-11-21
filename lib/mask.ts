@@ -1,6 +1,6 @@
 import type pg from "pg";
 import { getPool, inTransaction } from "@/lib/db";
-import { DEMO_REPLY } from "@/lib/demo";
+import { DEMO_GIVER_REPLY, demoReply } from "@/lib/demo";
 import { RoomError } from "@/lib/errors";
 import { LIMITS } from "@/lib/limits";
 
@@ -109,7 +109,7 @@ export async function postMaskMessage(
     if (stored.bytes >= LIMITS.maskStopDatabaseBytes) {
       throw new RoomError("STORAGE_FULL", "Mask talk is paused on this website for now. Your threads are safe. Try again later.");
     }
-    const adding = pair.other_is_demo && iGive ? 2 : 1;
+    const adding = pair.other_is_demo ? 2 : 1;
     if (stored.messages + adding > LIMITS.maskThreadMax) {
       throw new RoomError("THREAD_FULL", `This thread is full. It keeps ${LIMITS.maskThreadMax} messages.`);
     }
@@ -127,9 +127,18 @@ export async function postMaskMessage(
     }
 
     await db.query("insert into mask_messages (room_id, giver_id, from_giver, body) values ($1, $2, $3, $4)", [me.room_id, pair.giver_id, iGive, text]);
-    // In a demo room the receiver is played by the website: the answer lands in the same request.
-    if (pair.other_is_demo && iGive) {
-      await db.query("insert into mask_messages (room_id, giver_id, from_giver, body) values ($1, $2, false, $3)", [me.room_id, pair.giver_id, DEMO_REPLY]);
+    // In a demo room the other side is played by the website: the answer lands in the same request.
+    // The receiver goes through its script one line for each question; the giver has one answer.
+    if (pair.other_is_demo) {
+      const asked = (
+        await db.query("select count(*)::int as n from mask_messages where room_id = $1 and giver_id = $2 and from_giver = $3", [me.room_id, pair.giver_id, iGive])
+      ).rows[0].n;
+      await db.query("insert into mask_messages (room_id, giver_id, from_giver, body) values ($1, $2, $3, $4)", [
+        me.room_id,
+        pair.giver_id,
+        !iGive,
+        iGive ? demoReply(asked) : DEMO_GIVER_REPLY,
+      ]);
     }
     return { thread: (await threadsOf(db, code, personId))[side]!, otherPersonId: pair.other_person };
   }, pool);

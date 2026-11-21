@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "@/db/migrate.mjs";
-import { DEMO_MEMBERS, DEMO_QUESTION, DEMO_REPLY, startDemoRoom } from "@/lib/demo";
+import { DEMO_GIVER_REPLY, DEMO_MEMBERS, DEMO_QUESTION, DEMO_REPLIES, startDemoRoom } from "@/lib/demo";
 import { drawRoom } from "@/lib/draw";
+import { LIMITS } from "@/lib/limits";
 import { getMaskThreads, postMaskMessage } from "@/lib/mask";
 import { saveNote } from "@/lib/notes";
 import { revealNext } from "@/lib/reveal";
@@ -98,20 +99,18 @@ describe("a demo room plays the other members", () => {
     expect(await count("mask_messages")).toBe(1);
   });
 
-  it("answers the visitor's question in the same request, and has nobody to signal", async () => {
+  it("answers each question of the visitor in the same request, with the next line of the script, and has nobody to signal", async () => {
     const demo = await startDemoRoom(null, pool);
     await drawRoom(demo.code, demo.personId, pool);
 
-    const posted = await postMaskMessage(demo.code, demo.personId, "giving", "What size do you wear?", pool);
-    const answered = await postMaskMessage(demo.code, demo.personId, "receiving", "Tea, please.", pool);
+    const questions = ["What size do you wear?", "Any colour?", "Books or music?", "One more hint?"];
+    let posted = await postMaskMessage(demo.code, demo.personId, "giving", questions[0], pool);
+    for (const question of questions.slice(1)) posted = await postMaskMessage(demo.code, demo.personId, "giving", question, pool);
 
     expect(posted.otherPersonId).toBeNull();
-    expect(posted.thread.messages.map((message) => [message.mine, message.body])).toEqual([
-      [true, "What size do you wear?"],
-      [false, DEMO_REPLY],
-    ]);
-    // The thread with the secret giver gets no machine answer: the fixed question is the demo of that side.
-    expect(answered.thread.messages.map((message) => message.body)).toEqual([DEMO_QUESTION, "Tea, please."]);
+    // The last line of the script stays the answer once the script is over.
+    const answers = [DEMO_REPLIES[0], DEMO_REPLIES[1], DEMO_REPLIES[2], DEMO_REPLIES[2]];
+    expect(posted.thread.messages.map((message) => [message.mine, message.body])).toEqual(questions.flatMap((question, at) => [[true, question], [false, answers[at]]]));
   });
 
   it("marks the visitor's own message as mine in the thread with a demo secret giver", async () => {
@@ -122,6 +121,46 @@ describe("a demo room plays the other members", () => {
 
     expect(answered.thread.messages.find((message) => message.body === "Tea, please.")?.mine).toBe(true);
     expect(answered.thread.messages.find((message) => message.body === DEMO_QUESTION)?.mine).toBe(false);
+  });
+
+  it("has the secret giver answer the visitor too", async () => {
+    const demo = await startDemoRoom(null, pool);
+    await drawRoom(demo.code, demo.personId, pool);
+
+    const answered = await postMaskMessage(demo.code, demo.personId, "receiving", "Tea, please.", pool);
+
+    expect(answered.otherPersonId).toBeNull();
+    expect(answered.thread.messages.map((message) => [message.mine, message.body])).toEqual([
+      [false, DEMO_QUESTION],
+      [true, "Tea, please."],
+      [false, DEMO_GIVER_REPLY],
+    ]);
+  });
+
+  it("marks the visitor's own message as mine in the thread with a demo secret giver", async () => {
+    const demo = await startDemoRoom(null, pool);
+    await drawRoom(demo.code, demo.personId, pool);
+
+    const answered = await postMaskMessage(demo.code, demo.personId, "receiving", "Tea, please.", pool);
+
+    expect(answered.thread.messages.find((message) => message.body === "Tea, please.")?.mine).toBe(true);
+    expect(answered.thread.messages.find((message) => message.body === DEMO_QUESTION)?.mine).toBe(false);
+  });
+
+  it("counts the demo giver's answer against the thread cap too", async () => {
+    const demo = await startDemoRoom(null, pool);
+    await drawRoom(demo.code, demo.personId, pool);
+    // The thread with the secret giver holds the demo question; fill it to one below the cap.
+    await pool.query(
+      `insert into mask_messages (room_id, giver_id, from_giver, body, created_at)
+       select p.room_id, p.giver_id, true, 'filler', now() - interval '1 hour'
+         from pairs p join members receiver on receiver.id = p.receiver_id, generate_series(1, $2)
+        where receiver.person_id = $1`,
+      [demo.personId, LIMITS.maskThreadMax - 2],
+    );
+
+    // The visitor's message and the answer would make one more than the cap: neither is stored.
+    await expect(postMaskMessage(demo.code, demo.personId, "receiving", "Tea, please.", pool)).rejects.toMatchObject({ code: "THREAD_FULL" });
   });
 
   it("reveals four pairs with the notes of the demo givers and the visitor's own note", async () => {

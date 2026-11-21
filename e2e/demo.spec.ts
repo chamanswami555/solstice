@@ -32,6 +32,16 @@ test("a visitor alone goes from the first screen to the ring in a demo room", as
   await page.getByLabel(`Message to ${receiver}`).press("Enter");
   await expect(page.getByRole("log", { name: `Messages with ${receiver}` }).getByText("Demo answer: thank you for asking.")).toBeVisible();
   await expect(page.getByRole("log", { name: "Messages with your secret giver" }).getByText("Demo question from your secret giver: tea or coffee?")).toBeVisible();
+  // The visitor answers the secret giver, and the demo giver answers back. The visitor's line is "You".
+  await page.getByLabel("Message to your secret giver").fill("Tea, please.");
+  await page.getByLabel("Message to your secret giver").press("Enter");
+  const giverThread = page.getByRole("log", { name: "Messages with your secret giver" }).getByRole("listitem");
+  await expect(giverThread.filter({ hasText: "Demo answer from your secret giver" })).toBeVisible();
+  await expect(giverThread.filter({ hasText: "Tea, please." })).toContainText("You");
+  // A second question to the receiver gets the next line of the script.
+  await page.getByLabel(`Message to ${receiver}`).fill("Any colour?");
+  await page.getByLabel(`Message to ${receiver}`).press("Enter");
+  await expect(page.getByRole("log", { name: `Messages with ${receiver}` }).getByText("Demo answer: blue or green.")).toBeVisible();
 
   // The gift note, then the reveal of all four pairs.
   await page.getByRole("textbox", { name: "Gift note", exact: true }).fill("A song for you.");
