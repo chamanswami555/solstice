@@ -22,7 +22,7 @@ type Queryable = Pick<pg.Pool | pg.PoolClient, "query">;
 /** The threads of the caller: the pair where they give and the pair where they receive. */
 async function threadsOf(db: Queryable, code: string, personId: string): Promise<MaskThreads> {
   const found = await db.query(
-    `select giver.person_id = $2 as i_give,
+    `select coalesce(giver.person_id = $2, false) as i_give, -- a demo giver has no person: null is not a no
             p.muted_by,
             -- The mask: the giver's name leaves the database only for the giver, or after the full reveal.
             case when giver.person_id = $2 then receiver.display_name

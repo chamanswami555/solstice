@@ -114,6 +114,16 @@ describe("a demo room plays the other members", () => {
     expect(answered.thread.messages.map((message) => message.body)).toEqual([DEMO_QUESTION, "Tea, please."]);
   });
 
+  it("marks the visitor's own message as mine in the thread with a demo secret giver", async () => {
+    const demo = await startDemoRoom(null, pool);
+    await drawRoom(demo.code, demo.personId, pool);
+
+    const answered = await postMaskMessage(demo.code, demo.personId, "receiving", "Tea, please.", pool);
+
+    expect(answered.thread.messages.find((message) => message.body === "Tea, please.")?.mine).toBe(true);
+    expect(answered.thread.messages.find((message) => message.body === DEMO_QUESTION)?.mine).toBe(false);
+  });
+
   it("reveals four pairs with the notes of the demo givers and the visitor's own note", async () => {
     const demo = await startDemoRoom(null, pool);
     await drawRoom(demo.code, demo.personId, pool);
