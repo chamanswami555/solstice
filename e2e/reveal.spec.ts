@@ -25,6 +25,8 @@ test("four people and a guest watch the reveal pair by pair and end on the ring"
 
   await page.getByRole("button", { name: "Reveal next" }).click();
   await expect(page.getByRole("heading", { name: "Pair 1 of 4" })).toBeVisible();
+  // Cheers travel through room talk. With room talk switched off, no cheer is offered.
+  await expect(page.getByRole("button", { name: "Send a cheer" })).toHaveCount(0);
   const firstPair = await shownPair(page).innerText();
   for (const person of everyone) {
     await expect(person.getByRole("heading", { name: "Pair 1 of 4" })).toBeVisible(SLOW);

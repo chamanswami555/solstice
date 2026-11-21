@@ -9,10 +9,31 @@ import type { ApiError } from "@/lib/http";
 import { isBeforeExchangeDate, ringOrder } from "@/lib/reveal-rules";
 import type { RoomState } from "@/lib/rooms";
 
-type RevealProps = { state: RoomState; onMoved: () => Promise<void> };
+/** Cheers for the step on screen. `send` is null while room talk is not open: then no cheer is shown. */
+export type CheerView = { send: (() => Promise<boolean>) | null; mine: boolean; names: string[] };
+type RevealProps = { state: RoomState; onMoved: () => Promise<void>; cheer: CheerView };
+
+/** The cheer button and who cheered this step. */
+function Cheers({ cheer }: { cheer: CheerView }) {
+  const [failed, setFailed] = useState(false);
+  if (!cheer.send) return null;
+  const send = cheer.send;
+  return (
+    <div className="cheers">
+      {!cheer.mine && (
+        <Button variant="quiet" onClick={async () => setFailed(!(await send().catch(() => false)))}>
+          Send a cheer
+        </Button>
+      )}
+      <p className="field__help" role="status">
+        {failed ? "The cheer was not sent. Try again." : cheer.names.length > 0 ? `Cheers from ${new Intl.ListFormat("en").format(cheer.names)}.` : ""}
+      </p>
+    </div>
+  );
+}
 
 /** After the draw: the organizer shows one pair for each tap, and every screen shows the same pairs. */
-export function Reveal({ state, onMoved }: RevealProps) {
+export function Reveal({ state, onMoved, cheer }: RevealProps) {
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -57,6 +78,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
           The ring
         </h2>
         <p>Every pair is out. Each person gave to the next one, and the last one gave to the first.</p>
+        <Cheers key={reveal.step} cheer={cheer} />
         <ol className="members">
           {ringOrder(reveal.pairs).map((pair) => (
             <li className="members__row" key={pair.giverName}>
@@ -131,6 +153,7 @@ export function Reveal({ state, onMoved }: RevealProps) {
         <span className="drawcard__name">{latest.receiverName}</span>
       </p>
       {noteOf(latest) && <p className="reveal__note">{noteOf(latest)}</p>}
+      <Cheers key={reveal.step} cheer={cheer} />
       {controls}
       {problem && <Notice tone="error">{problem}</Notice>}
       {reveal.step > 1 && (

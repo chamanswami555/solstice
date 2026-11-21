@@ -1,6 +1,8 @@
 /**
  * Room talk and signals on the real Nexconn app. It runs only with `npm run test:e2e:talk`.
- * The three people and the room have fixed ids, so a run adds no new identity to the chat service.
+ * The three people have fixed ids, so a run adds no new identity to the chat service. The room is new
+ * in each run: the chat service gives a connecting browser the recent messages of its channel again,
+ * so a fixed room would show the cheers of the last run.
  */
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 import pg from "pg";
@@ -9,7 +11,7 @@ import { nexconnCall } from "../lib/nexconn-server";
 import { E2E_SESSION_SECRET } from "../playwright.config";
 import { TEST_DATABASE_URL } from "../tests/helpers/test-database";
 
-const ROOM = "TALKE2E1";
+const ROOM = `T${Date.now().toString(36).toUpperCase()}`;
 const ANITA = `p${"0".repeat(20)}e2ea`;
 const ROHAN = `p${"0".repeat(20)}e2eb`;
 const MEERA = `p${"0".repeat(20)}e2ec`;
@@ -154,6 +156,20 @@ test("a join, the draw, a reveal step and a mask message reach another browser w
     expect(frame.text).not.toContain("What size do you wear?");
   }
   expect(since(third).some((frame) => frame.text.includes("Solstice:Signal"))).toBe(false);
+
+  // Cheers at the reveal: a custom message from the browser. Each screen names who cheered this pair.
+  const cheersOf = (page: Page) => page.getByRole("status").filter({ hasText: "Cheers from" });
+  await expect(cheersOf(rohan)).toHaveCount(0);
+  await rohan.getByRole("button", { name: "Send a cheer" }).click();
+  await expect(cheersOf(rohan)).toHaveText("Cheers from you.");
+  await expect(rohan.getByRole("button", { name: "Send a cheer" })).toHaveCount(0);
+  await expect(cheersOf(anita)).toHaveText("Cheers from Rohan.", { timeout: SIGNAL_LIMIT_MS });
+  await expect(cheersOf(meera)).toHaveText("Cheers from Rohan.", { timeout: SIGNAL_LIMIT_MS });
+  await anita.getByRole("button", { name: "Send a cheer" }).click();
+  await expect(cheersOf(rohan)).toHaveText("Cheers from Anita and you.", { timeout: SIGNAL_LIMIT_MS });
+  await expect(cheersOf(anita)).toHaveText("Cheers from Rohan and you.");
+  await rohan.setViewportSize({ width: 390, height: 844 });
+  await rohan.locator("section").filter({ has: rohan.getByRole("heading", { name: "Pair 1 of 3" }) }).screenshot({ path: "test-results/cheers-phone.png" });
   expect(joinMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
   expect(drawMs).toBeLessThanOrEqual(SIGNAL_LIMIT_MS);
   expect(revealMs).toBeLessThanOrEqual(REVEAL_LIMIT_MS);

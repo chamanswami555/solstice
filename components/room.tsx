@@ -59,6 +59,14 @@ export function Room() {
   const [returnLink, setReturnLink] = useState<string | null>(null);
   // Counts the state loads. The mask threads load again with each one, by timer or by signal.
   const [loads, setLoads] = useState(0);
+  // Cheers live only in this page: who cheered, for each room and reveal step. One cheer for each person.
+  const [cheers, setCheers] = useState<Record<string, string[]>>({});
+  const [sendCheer, setSendCheer] = useState<((step: number) => Promise<boolean>) | null>(null);
+  const onCheer = useCallback((roomCode: string, senderId: string, step: number) => {
+    const key = `${roomCode}:${step}`;
+    setCheers((shown) => (shown[key]?.includes(senderId) ? shown : { ...shown, [key]: [...(shown[key] ?? []), senderId] }));
+  }, []);
+  const onCheerReady = useCallback((cheer: ((step: number) => Promise<boolean>) | null) => setSendCheer(() => cheer), []);
 
   const reload = useCallback(async () => {
     try {
@@ -124,7 +132,15 @@ export function Room() {
 
   const { room, me, members, draw, reveal } = view.state;
   // Before the first pair the draw card leads. From the first pair on, the reveal leads.
-  const revealPanel = <Reveal state={view.state} onMoved={reload} />;
+  const cheeredBy = cheers[`${room.code}:${reveal.step}`] ?? [];
+  const nameOf = new Map(members.map((member) => [member.talkId, member.displayName]));
+  const cheer = {
+    send: sendCheer && (() => sendCheer(reveal.step)),
+    mine: cheeredBy.includes(me.talkId),
+    // The caller last, as "you". A sender who is not in the member list is not shown.
+    names: [...cheeredBy.filter((id) => id !== me.talkId).flatMap((id) => nameOf.get(id) ?? []), ...(cheeredBy.includes(me.talkId) ? ["you"] : [])],
+  };
+  const revealPanel = <Reveal state={view.state} onMoved={reload} cheer={cheer} />;
   const inviteLink = `${window.location.origin}/r/${room.code}`;
   const returnPanel = returnLink && (
       <section className="panel panel--lit" aria-labelledby="return-title">
@@ -163,7 +179,7 @@ export function Room() {
       {draw.drawn && me.role === "member" && room.kind !== "demo" && reveal.step < reveal.total && <Nudge link={inviteLink} />}
       <GiftNote state={view.state} onSaved={() => void reload()} />
       <Wishes state={view.state} />
-      <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
+      <RoomTalk code={room.code} me={me} members={members} onSignal={reload} onCheer={onCheer} onCheerReady={onCheerReady} />
       {room.kind === "demo" && returnPanel}
 
       {room.kind !== "demo" && (
