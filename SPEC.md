@@ -262,7 +262,7 @@ last to the first. Gates 1, 2, 3 and 5 are the product. Real groups start when g
 5. (gate 3) A visitor alone finishes the demo room in 3 minutes or less.
 6. (gate 1) A scan finds no App Secret in the browser bundle, the repository or its history.
 7. Limits, set in one configuration file. From gate 1: a cap on the total number of identities,
-   1,800 until the Chat Growth Credit is claimed. From gate 3: 10 rooms for each IP address in an
+   9,000 on the Chat Growth Credit plan (10,000 monthly active users; 1,800 before it). From gate 3: 10 rooms for each IP address in an
    hour, 60 new people (requests with no identity) for each IP address in an hour, one demo room
    for each identity (it can restart), 20 mask messages for each member in a minute, 300 stored
    messages in one mask thread, and no new mask message when the database is above 800 MB. A test
