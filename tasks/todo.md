@@ -200,7 +200,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
 
 ## Phase: Submission (gate 5, fixed)
 
-- [ ] Task 20: Repository front page and write-up PDF (M)
+- [ ] Task 20: Repository front page and write-up PDF (M). Done on 21 November except two owner inputs: the headline number from the usage page after a real round, and the video link
   - Acceptance: the first screen of the README has the tagline, the headline number from the usage
     page, one image and the video link. The PDF holds the problem, the SDK features with where they
     run, the App Key and the traction proof. Each row of the SDK table in the spec has a test that
@@ -208,7 +208,7 @@ Order of work: 6, 8, 9, 10a, then 2, 7, 10b when the Nexconn keys arrive, then g
   - Verify: text of the PDF decoded and compared with its source; scan of the properties.
   - Files: `README.md`, `docs/write-up.md`, `docs/build-write-up.py`, `docs/images/`.
 
-- [ ] Task 21: Public release scan (S)
+- [x] Task 21: Public release scan (S). 21 November 20:23: no secret value in any version of any file or commit message; no owner name, home path or hosted database id; hits left are test fixtures (fake emails, a fake secret) and the CSS word cursor; images carry no text chunks; npm audit 0
   - Acceptance: no secret, no personal or organisation identifier and no name of build software in
     the tracked tree or in the history of any ref. The dependency audit has no high finding.
   - Verify: the scans run as a gate before the push. Files: none in the repository.
