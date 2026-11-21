@@ -8,6 +8,7 @@ import { DrawPanel } from "@/components/draw-panel";
 import { GiftNote } from "@/components/gift-note";
 import { JoinForm } from "@/components/join-form";
 import { MaskThreads } from "@/components/mask-thread";
+import { Nudge } from "@/components/nudge";
 import { MemberList } from "@/components/member-list";
 import { Reveal } from "@/components/reveal";
 import { RoomTalk } from "@/components/room-talk";
@@ -159,6 +160,7 @@ export function Room() {
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
+      {draw.drawn && me.role === "member" && room.kind !== "demo" && reveal.step < reveal.total && <Nudge link={inviteLink} />}
       <GiftNote state={view.state} onSaved={() => void reload()} />
       <Wishes state={view.state} />
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} />
