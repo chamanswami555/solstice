@@ -4,7 +4,9 @@
 /* Page shell */
 body { display: flex; flex-direction: column; min-height: 100dvh; background-repeat: no-repeat; background-image: radial-gradient(90% 120% at 0% 30%, var(--color-cotton), transparent 62%); }
 .site-header { padding-block: var(--space-sm); }
-.wordmark { display: inline-flex; align-items: center; min-height: var(--control-height); border-radius: var(--radius-input); font-family: var(--font-outlier); font-size: var(--text-xl); line-height: 1; letter-spacing: -0.015em; text-decoration: none; }
+.wordmark__mark { width: 1.15em; height: 1.15em; fill: var(--color-accent-2); }
+.wordmark__hole { fill: var(--color-paper); }
+.wordmark { display: inline-flex; gap: var(--space-xs); align-items: center; min-height: var(--control-height); border-radius: var(--radius-input); font-family: var(--font-outlier); font-size: var(--text-xl); line-height: 1; letter-spacing: -0.015em; text-decoration: none; }
 .site-main { flex: 1; padding-block: var(--space-lg) var(--space-2xl); }
 .site-footer__line { padding-block: var(--space-lg); border-top: 1px solid var(--color-rule); font-size: var(--text-sm); color: var(--color-muted); }
 

@@ -8,14 +8,15 @@
   --container: 72rem; --gutter: 64px; --gap-columns: 32px;
   --control-height: 48px;
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
-  --color-paper: oklch(96.5% 0.014 80); --color-paper-2: oklch(94% 0.016 80); --color-paper-3: oklch(91% 0.018 80);
-  --color-cotton: oklch(98.6% 0.008 85); --color-lit: oklch(94.5% 0.04 85);
-  --color-ink: oklch(26% 0.045 160); --color-muted: oklch(45% 0.03 160);
-  --color-rule: oklch(87% 0.014 80);
-  --color-accent: oklch(80% 0.14 78); --color-accent-ink: oklch(26% 0.045 160); --color-accent-2: oklch(48% 0.095 70); --color-focus: oklch(50% 0.1 70);
-  --color-board: oklch(29% 0.05 160); --color-board-type: oklch(97% 0.012 85);
+  /* Milky mystery: milk-white paper with a trace of lilac, midnight-indigo ink and stage, a violet ring, a moon-gold accent. */
+  --color-paper: oklch(97% 0.01 300); --color-paper-2: oklch(94.5% 0.014 300); --color-paper-3: oklch(91.5% 0.018 300);
+  --color-cotton: oklch(99% 0.005 300); --color-lit: oklch(95% 0.03 295);
+  --color-ink: oklch(25% 0.06 280); --color-muted: oklch(45% 0.04 280);
+  --color-rule: oklch(88% 0.014 300);
+  --color-accent: oklch(84% 0.11 85); --color-accent-ink: oklch(25% 0.06 280); --color-accent-2: oklch(47% 0.13 295); --color-focus: oklch(48% 0.14 295);
+  --color-board: oklch(27% 0.07 280); --color-board-type: oklch(97% 0.012 300);
   --color-error: oklch(47% 0.17 27);
-  --shade: 34% 0.035 70; --lit: 100% 0.008 85;
+  --shade: 30% 0.05 285; --lit: 100% 0.006 300;
   --font-display: var(--font-figtree), "Figtree", ui-sans-serif, system-ui, sans-serif; --font-body: var(--font-display);
   --font-outlier: var(--font-young-serif), "Young Serif", ui-serif, Georgia, serif;
   --radius-card: 16px; --radius-input: 12px;

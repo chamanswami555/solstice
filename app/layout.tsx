@@ -33,6 +33,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="site-header">
           <div className="container">
             <Link className="wordmark" href="/" aria-label={`${BRAND.name} home`}>
+              {/* The mark: a light behind the night, as in an eclipse. The same shape as app/icon.svg. */}
+              <svg className="wordmark__mark" viewBox="0 0 64 64" aria-hidden="true">
+                <circle cx="31" cy="34" r="16.5" />
+                <circle cx="30.2" cy="33.2" r="14" className="wordmark__hole" />
+              </svg>
               {BRAND.name}
             </Link>
           </div>
