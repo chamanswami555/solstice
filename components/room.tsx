@@ -182,6 +182,14 @@ export function Room() {
         Invite your group
       </h2>
       <CopyLink label="Invite link" value={inviteLink} />
+      {/* A phone's share sheet sends the link to a chat in one tap. A closed sheet is not an error. */}
+      {typeof navigator.share === "function" && (
+        <div>
+          <Button variant="quiet" onClick={() => void navigator.share({ title: room.name, text: `Join our Secret Santa: ${room.name}`, url: inviteLink }).catch(() => {})}>
+            Share the invite
+          </Button>
+        </div>
+      )}
     </section>
   );
   const wishesPanel = (

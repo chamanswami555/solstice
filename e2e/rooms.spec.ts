@@ -134,3 +134,18 @@ test.describe("the API", () => {
     expect(response.status()).toBe(404);
   });
 });
+
+test("on a phone with a share sheet, the organizer shares the invite link in one tap", async ({ page }) => {
+  // The test browser has no share sheet: a stand-in records what the page hands to it.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { configurable: true, value: async (data: ShareData) => void ((window as unknown as { shared: ShareData }).shared = data) });
+  });
+  await page.goto("/");
+  await page.getByLabel("Room name").fill("Friday dinner");
+  await page.getByLabel("Your display name").fill("Anita");
+  await page.getByRole("button", { name: "Create room" }).click();
+  const invite = await page.getByRole("textbox", { name: "Invite link" }).inputValue();
+  await page.getByRole("button", { name: "Share the invite" }).click();
+  const shared = await page.evaluate(() => (window as unknown as { shared: ShareData }).shared);
+  expect(shared).toEqual({ title: "Friday dinner", text: "Join our Secret Santa: Friday dinner", url: invite });
+});
