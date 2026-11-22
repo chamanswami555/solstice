@@ -54,6 +54,16 @@ async function openReturnLink(secret: string): Promise<boolean> {
   return response.ok;
 }
 
+/** Also the static page before the script runs. A browser that cannot run the script stays here, so it says what to do. */
+export function RoomOpening() {
+  return (
+    <div className="room">
+      <p className="lead">Opening the room.</p>
+      <p>If the room does not open in a few seconds, copy the link and open it in Chrome or Safari.</p>
+    </div>
+  );
+}
+
 export function Room() {
   const { code } = useParams<{ code: string }>();
   const [view, setView] = useState<View>({ status: "loading" });
@@ -101,7 +111,7 @@ export function Room() {
     };
   }, [code, reload]);
 
-  if (view.status === "loading") return <p className="lead">Opening the room.</p>;
+  if (view.status === "loading") return <RoomOpening />;
   if (view.status === "failed") {
     return <Notice tone="error">The room did not load. Check your connection. The page tries again every 10 seconds.</Notice>;
   }
@@ -193,10 +203,11 @@ export function Room() {
       {reveal.step > 0 && revealPanel}
       {!draw.drawn && invitePanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
-      {reveal.step === 0 && revealPanel}
+      {reveal.step === 0 && me.isOrganizer && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
       <GiftNote state={view.state} onSaved={() => void reload()} />
       {draw.drawn && me.role === "member" && room.kind !== "demo" && reveal.step < reveal.total && <Nudge link={inviteLink} />}
+      {reveal.step === 0 && !me.isOrganizer && revealPanel}
       {!draw.drawn && wishesPanel}
       {!draw.drawn && memberList}
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} onCheer={onCheer} onCheerReady={onCheerReady} />

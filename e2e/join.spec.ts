@@ -58,3 +58,11 @@ test("the join route answers a full or unknown room with one error shape", async
   expect(empty.status()).toBe(422);
   expect(Object.keys((await empty.json()).error.fields)).toEqual(["displayName"]);
 });
+
+test("a browser that cannot run the script sees what to do on the room page", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/r/ZZZZZZZZ");
+  await expect(page.getByText("If the room does not open in a few seconds, copy the link and open it in Chrome or Safari.")).toBeVisible();
+  await context.close();
+});
