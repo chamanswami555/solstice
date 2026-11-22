@@ -16,7 +16,10 @@ test("the first screen shows the product name and loads with no error", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Draw names. Ask questions. Keep the secret.");
   await expect(page).toHaveTitle("Solstice");
   await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
-  await expect(page.getByText("Got an invite link? Open it to join that room. The form below makes a new room.")).toBeVisible();
+  await expect(page.getByText("Got an invite link? Open it to join that room. This form makes a new room.")).toBeVisible();
+  // The first screen shows the product's own reveal, with the words that it is an example.
+  await expect(page.locator(".preview__giver")).toHaveText("Meera");
+  await expect(page.getByText("An example of the reveal. Every phone shows the same pair, live.")).toBeVisible();
   expect(problems).toEqual([]);
 });
 

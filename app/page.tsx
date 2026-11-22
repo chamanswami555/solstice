@@ -9,7 +9,14 @@ export default function Home() {
           <span>Draw names.</span> <span>Ask questions.</span> <span>Keep the secret.</span>
         </h1>
         <p className="lead">Your group shares one room from one link, with no accounts.</p>
-        <p className="notice">Got an invite link? Open it to join that room. The form below makes a new room.</p>
+        <p className="notice">Got an invite link? Open it to join that room. This form makes a new room.</p>
+        <figure className="preview">
+          <div className="preview__stage">
+            <p className="preview__lead">The secret giver of Rohan is</p>
+            <p className="preview__giver">Meera</p>
+          </div>
+          <figcaption className="preview__caption">An example of the reveal. Every phone shows the same pair, live.</figcaption>
+        </figure>
       </div>
       <CreateRoomForm />
       <section className="panel" aria-labelledby="demo-start-title">
