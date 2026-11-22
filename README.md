@@ -1,14 +1,19 @@
 # Solstice
 
-A secret gift exchange for your group, in one room. Built on the Nexconn Chat SDK for the Nexconn
-Build Challenge 2026.
+A Secret Santa for your group, on one link. Built on the Nexconn Chat SDK for the Nexconn Build
+Challenge 2026.
 
-**A secret that holds:** a security test calls all 11 room routes as 8 kinds of caller (organizer,
-member, guest, outsider, removed member, unknown person, forged cookie, no cookie). A second test
-reads every answer and every page before the reveal: none links a giver to a pair.
+In a Secret Santa, a giver cannot ask "what size?" without giving away the secret. Solstice puts the
+whole exchange in one live room: the group talks, each giver asks their person questions as "Your
+secret giver", and every phone shows the reveal live, with cheers.
 
-**Try it:** <https://solstice-black.vercel.app>. Alone? Tap "Try the demo room": the website plays three
-members, and the whole exchange takes about 3 minutes.
+**Try it:** <https://solstice-black.vercel.app>. Alone? Tap "Try the 3-minute demo": the website plays
+three members.
+
+**The secret holds.** Nobody can learn who gives to whom before the reveal, not even the organizer. A
+security test calls all 11 room routes as 8 kinds of caller (organizer, member, guest, outsider,
+removed member, unknown person, forged cookie, no cookie). A second test reads every answer and every
+page before the reveal: none links a giver to a pair.
 
 ![The draw card, a mask thread and the ring of a demo room, on a phone](docs/images/readme.png)
 
@@ -25,6 +30,11 @@ members, and the whole exchange takes about 3 minutes.
    masks come off and the room shows the ring.
 
 ## How it uses Nexconn
+
+Nexconn carries every live part of the room: the group chat, the private draw card, the alert for a
+new secret message, the reveal on every phone, and the cheers. The secret messages stay in our
+database. Nexconn only tells the receiver's phone that a new message is waiting, with no text and no
+sender, so the chat service never learns who the giver is.
 
 | Product part | Nexconn feature | Code |
 | --- | --- | --- |
