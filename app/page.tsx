@@ -9,6 +9,7 @@ export default function Home() {
           <span>Draw names.</span> <span>Ask questions.</span> <span>Keep the secret.</span>
         </h1>
         <p className="lead">Your group shares one room from one link, with no accounts.</p>
+        <p className="notice">Got an invite link? Open it to join that room. The form below makes a new room.</p>
       </div>
       <CreateRoomForm />
       <section className="panel" aria-labelledby="demo-start-title">

@@ -16,6 +16,7 @@ test("the first screen shows the product name and loads with no error", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Draw names. Ask questions. Keep the secret.");
   await expect(page).toHaveTitle("Solstice");
   await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
+  await expect(page.getByText("Got an invite link? Open it to join that room. The form below makes a new room.")).toBeVisible();
   expect(problems).toEqual([]);
 });
 
