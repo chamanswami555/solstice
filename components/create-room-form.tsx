@@ -12,8 +12,8 @@ import { LIMITS } from "@/lib/limits";
 type RoomKind = "december" | "tonight";
 
 const KINDS: readonly Choice<RoomKind>[] = [
-  { value: "december", title: "December room", hint: "Set a date and a budget." },
-  { value: "tonight", title: "Tonight round", hint: "About 15 minutes. The gift is a note." },
+  { value: "december", title: "December room", hint: "Real gifts on a date you pick, with a budget." },
+  { value: "tonight", title: "Tonight round", hint: "A quick round now, about 15 minutes. Each gift is a short note." },
 ];
 
 /** The fields that can be wrong, in the order of the screen. */
