@@ -58,7 +58,11 @@ test("four people and a guest watch the reveal pair by pair and end on the ring"
   await expect(page.getByRole("list", { name: "Pairs shown before" }).getByRole("listitem")).toHaveCount(2);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "test-results/reveal-organizer-phone.png", fullPage: true });
+  // The last tap brings a scrolled-down screen to the ring too.
+  await members[1].evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.getByRole("button", { name: "Reveal next" }).click();
+  await expect(members[1].getByRole("heading", { name: "The ring" })).toBeVisible(SLOW);
+  await expect(members[1].getByRole("heading", { name: "The ring" })).toBeInViewport();
 
   for (const person of everyone) {
     await expect(person.getByRole("heading", { name: "The ring" })).toBeVisible(SLOW);

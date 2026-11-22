@@ -85,7 +85,7 @@ export function Reveal({ state, onMoved, cheer }: RevealProps) {
 
   if (reveal.step === reveal.total) {
     return (
-      <section className="panel panel--lit" aria-labelledby="reveal-title">
+      <section className="panel panel--lit" aria-labelledby="reveal-title" ref={stage}>
         <h2 className="panel__title" id="reveal-title">
           The ring
         </h2>

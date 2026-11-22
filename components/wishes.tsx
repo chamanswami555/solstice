@@ -6,17 +6,18 @@ import type { ApiError } from "@/lib/http";
 import { LIMITS } from "@/lib/limits";
 import type { RoomState } from "@/lib/rooms";
 
-type WishesProps = { state: RoomState };
+/** The typed list lives in the room, so it survives the move of this panel into the fold at the draw. Null: nothing typed yet. */
+type WishesProps = { state: RoomState; draft: string[] | null; onDraft: (draft: string[]) => void };
 
 /** One text field for each saved wish, and one empty field when there is none. More fields come with "Add another wish". */
 const fields = (saved: readonly string[]) => (saved.length > 0 ? [...saved] : [""]);
 
 /** The member's own wish list. Only the secret giver sees it, after the draw. A guest has none. */
-export function Wishes({ state }: WishesProps) {
+export function Wishes({ state, draft: typed, onDraft: setDraft }: WishesProps) {
   const id = useId();
   const { room, me, draw, wishes } = state;
-  // The fields start from the saved list one time. A later state load must not undo what the member types.
-  const [draft, setDraft] = useState(() => fields(wishes.mine));
+  // The fields show the saved list until the member types. A later state load must not undo what the member types.
+  const draft = typed ?? fields(wishes.mine);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ error: boolean; text: string } | null>(null);
 

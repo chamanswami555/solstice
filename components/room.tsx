@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CopyLink } from "@/components/copy-link";
@@ -73,6 +74,8 @@ export function Room() {
   // Cheers live only in this page: who cheered, for each room and reveal step. One cheer for each person.
   const [cheers, setCheers] = useState<Record<string, string[]>>({});
   const [sendCheer, setSendCheer] = useState<((step: number) => Promise<boolean>) | null>(null);
+  // Typed wishes, kept with their room code: a demo that starts again gets a new code and an empty draft.
+  const [wishDraft, setWishDraft] = useState<{ code: string; list: string[] } | null>(null);
   const onCheer = useCallback((roomCode: string, senderId: string, step: number) => {
     const key = `${roomCode}:${step}`;
     setCheers((shown) => (shown[key]?.includes(senderId) ? shown : { ...shown, [key]: [...(shown[key] ?? []), senderId] }));
@@ -120,6 +123,11 @@ export function Room() {
       <div className="room">
         <h1 className="room__title">This room does not exist</h1>
         <p className="lead">Check the invite link, or ask your organizer for a new one.</p>
+        <div>
+          <Link className="btn" href="/">
+            Start a new room
+          </Link>
+        </div>
       </div>
     );
   }
@@ -176,7 +184,13 @@ export function Room() {
       <CopyLink label="Invite link" value={inviteLink} />
     </section>
   );
-  const wishesPanel = <Wishes state={view.state} />;
+  const wishesPanel = (
+    <Wishes
+      state={view.state}
+      draft={wishDraft?.code === room.code ? wishDraft.list : null}
+      onDraft={(list) => setWishDraft({ code: room.code, list })}
+    />
+  );
   const memberList = <MemberList state={view.state} onChanged={() => void reload()} />;
   // After the draw these matter less than the draw card and the talks, so they fold away at the end.
   const folded = [me.role === "member" && "your wish list", "the people", room.kind !== "demo" && "the invite link"].filter(
@@ -198,10 +212,10 @@ export function Room() {
 
       {room.kind === "demo" && <DemoBanner demoNames={members.filter((member) => member.isDemo).map((member) => member.displayName)} />}
 
+      {!draw.drawn && invitePanel}
       {room.kind !== "demo" && returnPanel}
 
       {reveal.step > 0 && revealPanel}
-      {!draw.drawn && invitePanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && me.isOrganizer && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}

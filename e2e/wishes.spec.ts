@@ -30,7 +30,15 @@ test("a member writes wishes, and only the secret giver sees them after the draw
   // Before the draw nobody but Rohan gets the wishes.
   for (const person of [page, meera]) expect(JSON.stringify(await stateOf(person))).not.toContain("A warm scarf");
 
+  // A wish that Rohan is still typing when the names are drawn stays in its field.
+  await rohan.getByRole("button", { name: "Add another wish" }).click();
+  await rohan.getByLabel("Wish 3").fill("A book of poems");
   await drawNames(page, 3);
+  await expect(rohan.locator(".drawcard__name")).toBeVisible(SLOW);
+  await rohan.locator(".fold__summary").click();
+  await expect(rohan.getByLabel("Wish 3")).toHaveValue("A book of poems");
+  await rohan.getByLabel("Wish 3").fill("");
+  await rohan.locator(".fold__summary").click();
   let giver: Page | undefined;
   for (const person of everyone) {
     await expect(person.locator(".drawcard__name")).toBeVisible(SLOW);
