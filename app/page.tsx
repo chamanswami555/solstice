@@ -8,7 +8,12 @@ export default function Home() {
         <h1 className="start__title">
           <span>Draw names.</span> <span>Ask questions.</span> <span>Keep the secret.</span>
         </h1>
-        <p className="lead">Your group shares one room from one link, with no accounts.</p>
+        <p className="lead">A Secret Santa for your group. Everyone gets one person to give a gift to, and can ask them questions without showing their name.</p>
+        <ol className="steps" aria-label="How it works">
+          <li>Make a room and share one link. Nobody makes an account.</li>
+          <li>The website draws the names. Ask your person anything as &quot;Your secret giver&quot;.</li>
+          <li>Reveal together: every phone shows who gave to whom.</li>
+        </ol>
         <p className="notice">Got an invite link? Open it to join that room. This form makes a new room.</p>
         <figure className="preview">
           <div className="preview__stage">

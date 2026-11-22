@@ -128,7 +128,7 @@ export function Room() {
       <div className="room">
         <div className="room__head">
           <h1 className="room__title">{view.roomName}</h1>
-          <p className="room__meta">You are invited to this secret gift exchange.</p>
+          <p className="room__meta">You are invited to a Secret Santa. Join with your name. After the draw you get one person to give a gift to.</p>
         </div>
         <JoinForm
           code={code}

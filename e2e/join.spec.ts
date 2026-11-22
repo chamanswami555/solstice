@@ -15,6 +15,8 @@ test("a second person joins by the invite link and both see each other", async (
   const phone = await browser.newContext();
   const joiner = await phone.newPage();
   await joiner.goto(invite);
+  // The invited person learns what they join and what comes next.
+  await expect(joiner.getByText("You are invited to a Secret Santa. Join with your name. After the draw you get one person to give a gift to.")).toBeVisible();
   await joiner.getByLabel("Your display name").fill("Rohan");
   await joiner.getByRole("button", { name: "Join room" }).click();
 

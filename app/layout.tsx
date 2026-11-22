@@ -15,9 +15,15 @@ const youngSerif = Young_Serif({
   subsets: ["latin"],
 });
 
+const SHARE_TITLE = `${BRAND.name}: a Secret Santa for your group`;
+const SHARE_TEXT = "Draw names, ask your person questions without showing your name, and watch the reveal live on every phone. No app, no sign-up.";
+
+// The share fields give a link in a chat or a post a title, a text and the image of app/opengraph-image.tsx.
 export const metadata: Metadata = {
   title: BRAND.name,
   description: BRAND.tagline,
+  openGraph: { title: SHARE_TITLE, description: SHARE_TEXT, siteName: BRAND.name, type: "website" },
+  twitter: { card: "summary_large_image", title: SHARE_TITLE, description: SHARE_TEXT },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

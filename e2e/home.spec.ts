@@ -17,6 +17,15 @@ test("the first screen shows the product name and loads with no error", async ({
   await expect(page).toHaveTitle("Solstice");
   await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
   await expect(page.getByText("Got an invite link? Open it to join that room. This form makes a new room.")).toBeVisible();
+  // A first-time visitor learns what this is and how it goes, before the form.
+  await expect(page.getByText("A Secret Santa for your group.", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("list", { name: "How it works" }).getByRole("listitem")).toHaveCount(3);
+  // A shared link gets a preview with a title, a text and an image.
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", "Solstice: a Secret Santa for your group");
+  await expect(page.locator('meta[property="og:image"]')).toHaveCount(1);
+  const image = await page.request.get(new URL((await page.locator('meta[property="og:image"]').getAttribute("content"))!).pathname);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toBe("image/png");
   // The first screen shows the product's own reveal, with the words that it is an example.
   await expect(page.locator(".preview__giver")).toHaveText("Meera");
   await expect(page.getByText("An example of the reveal. Every phone shows the same pair, live.")).toBeVisible();
