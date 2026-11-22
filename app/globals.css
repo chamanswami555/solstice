@@ -2,7 +2,7 @@
 @import "./base.css";
 
 /* Page shell */
-body { display: flex; flex-direction: column; min-height: 100dvh; background-repeat: no-repeat; background-image: radial-gradient(90% 120% at 0% 30%, var(--color-cotton), transparent 62%); }
+body { display: flex; flex-direction: column; min-height: 100dvh; background-repeat: no-repeat; background-image: radial-gradient(60% 45% at 100% 0%, var(--color-lit), transparent 70%), radial-gradient(90% 120% at 0% 30%, var(--color-cotton), transparent 62%); }
 .site-header { padding-block: var(--space-sm); }
 .wordmark__mark { width: 1.15em; height: 1.15em; fill: var(--color-accent-2); }
 .wordmark__hole { fill: var(--color-paper); }
@@ -130,3 +130,8 @@ body { display: flex; flex-direction: column; min-height: 100dvh; background-rep
 .fold__summary { cursor: pointer; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-input); background-color: var(--color-paper-3); color: var(--color-ink); font-weight: 600; }
 .fold__summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .fold__body { display: grid; gap: var(--space-lg); padding-top: var(--space-sm); }
+
+/* Display text in the serif of the wordmark: one voice for the name, the headlines and the names at the draw and the reveal. Last, so it wins over the size rules above. */
+.start__title, .room__title, .drawcard__name, .preview__giver { font-family: var(--font-outlier); font-weight: 400; letter-spacing: -0.01em; }
+/* The stage: a soft spotlight from above and a rose hairline, so the reveal feels like a curtain opening. */
+.reveal__pair, .preview__stage { background-image: radial-gradient(90% 80% at 50% 0%, var(--color-cotton), transparent 75%); box-shadow: inset 0 0 0 1px var(--color-board-edge); }

@@ -8,15 +8,15 @@
   --container: 72rem; --gutter: 64px; --gap-columns: 32px;
   --control-height: 48px;
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
-  /* Milky mystery: milk-white paper with a trace of lilac, midnight-indigo ink, a rose-milk stage and buttons, a violet ring, a moon-gold accent. */
-  --color-paper: oklch(97% 0.01 300); --color-paper-2: oklch(94.5% 0.014 300); --color-paper-3: oklch(91.5% 0.018 300);
-  --color-cotton: oklch(99% 0.005 300); --color-lit: oklch(95% 0.03 295);
-  --color-ink: oklch(25% 0.06 280); --color-muted: oklch(45% 0.04 280);
-  --color-rule: oklch(88% 0.014 300);
-  --color-accent: oklch(84% 0.11 85); --color-accent-ink: oklch(25% 0.06 280); --color-accent-2: oklch(47% 0.13 295); --color-focus: oklch(48% 0.14 295);
-  --color-board: oklch(94% 0.032 8); --color-board-type: oklch(25% 0.06 280); --color-board-edge: oklch(82% 0.06 8);
+  /* Rose milk, no blue anywhere: warm milk paper, a rose-milk stage and buttons, a deep rose-brown ink, a deep rose ring, a moon-gold accent. */
+  --color-paper: oklch(97.5% 0.008 20); --color-paper-2: oklch(95% 0.012 20); --color-paper-3: oklch(92% 0.016 20);
+  --color-cotton: oklch(99.2% 0.004 20); --color-lit: oklch(96% 0.022 10);
+  --color-ink: oklch(34% 0.045 12); --color-muted: oklch(50% 0.04 12);
+  --color-rule: oklch(89% 0.012 20);
+  --color-accent: oklch(84% 0.11 85); --color-accent-ink: oklch(34% 0.045 12); --color-accent-2: oklch(52% 0.14 5); --color-focus: oklch(50% 0.14 5);
+  --color-board: oklch(96.8% 0.018 8); --color-board-type: oklch(34% 0.045 12); --color-board-edge: oklch(78% 0.07 8);
   --color-error: oklch(47% 0.17 27);
-  --shade: 30% 0.05 285; --lit: 100% 0.006 300;
+  --shade: 30% 0.04 15; --lit: 100% 0.004 20;
   --font-display: var(--font-figtree), "Figtree", ui-sans-serif, system-ui, sans-serif; --font-body: var(--font-display);
   --font-outlier: var(--font-young-serif), "Young Serif", ui-serif, Georgia, serif;
   --radius-card: 16px; --radius-input: 12px;

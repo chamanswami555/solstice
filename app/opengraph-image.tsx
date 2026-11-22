@@ -10,10 +10,10 @@ export const contentType = "image/png";
 export default function OpenGraphImage() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", background: "#f6f4fb", color: "#1c1d3e" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 80px", background: "#fcf5f4", color: "#351c1e" }}>
         <div style={{ fontSize: 64, fontWeight: 700 }}>{BRAND.name}</div>
         <div style={{ fontSize: 40, marginTop: 12 }}>A Secret Santa for your group, on one link.</div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 48, padding: "44px 0", borderRadius: 28, background: "#ffe3e7", color: "#1c1d3e", border: "2px solid #e8b5bd" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 48, padding: "44px 0", borderRadius: 28, background: "#fff0f2", color: "#351c1e", border: "2px solid #e0a5af" }}>
           <div style={{ fontSize: 36 }}>The secret giver of Rohan is</div>
           <div style={{ fontSize: 96, fontWeight: 700, marginTop: 8 }}>Meera</div>
         </div>
