@@ -92,10 +92,14 @@ describe("nextStep after the draw", () => {
 });
 
 describe("nextStep during and after the reveal", () => {
-  it("tells the organizer to tap for the next pair and the others to watch", () => {
-    const during = { ...drawn, reveal: { step: 2, total: 4, pairs: [] } };
-    expect(nextStep(state(during))).toBe('Pair 2 of 4 is out. Tap "Reveal next" for the next pair.');
-    expect(nextStep(state({ ...during, me: rohan }))).toBe("Pair 2 of 4 is out. Watch for the next one.");
+  it("names the newest pair, then tells the organizer to tap and the others to watch", () => {
+    const pairs = [
+      { giverName: "Dev", receiverName: "Anita", note: null },
+      { giverName: "Meera", receiverName: "Rohan", note: "A song" },
+    ];
+    const during = { ...drawn, reveal: { step: 2, total: 4, pairs } };
+    expect(nextStep(state(during))).toBe('Pair 2 of 4: Meera gave to Rohan. Tap "Reveal next" for the next pair.');
+    expect(nextStep(state({ ...during, me: rohan }))).toBe("Pair 2 of 4: Meera gave to Rohan. Watch for the next one.");
   });
 
   it("points everyone to the ring at the end", () => {

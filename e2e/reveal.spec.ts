@@ -47,6 +47,12 @@ test("four people and a guest watch the reveal pair by pair and end on the ring"
   // A member who scrolled down is brought back to the reveal by the next pair.
   await members[1].evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(members[1].locator(".reveal__pair")).not.toBeInViewport();
+  // A member who is typing keeps their place: the page does not jump away from the field.
+  const typing = members[2].getByLabel("Message to your secret giver");
+  // Less motion makes any scroll instant, so the check below cannot pass before a smooth scroll ends.
+  await members[2].emulateMedia({ reducedMotion: "reduce" });
+  await typing.focus();
+  await expect(members[2].locator(".reveal__pair")).not.toBeInViewport();
   for (const step of [2, 3]) {
     await page.getByRole("button", { name: "Reveal next" }).click();
     await expect(page.getByRole("heading", { name: `Pair ${step} of 4` })).toBeVisible();
@@ -55,6 +61,10 @@ test("four people and a guest watch the reveal pair by pair and end on the ring"
   }
   await expect(members[1].getByRole("heading", { name: "Pair 3 of 4" })).toBeVisible(SLOW);
   await expect(members[1].locator(".reveal__pair")).toBeInViewport();
+  await expect(members[2].getByRole("heading", { name: "Pair 3 of 4" })).toBeAttached(SLOW);
+  await members[2].waitForTimeout(500);
+  await expect(typing).toBeFocused();
+  await expect(members[2].locator(".reveal__pair")).not.toBeInViewport();
   await expect(page.getByRole("list", { name: "Pairs shown before" }).getByRole("listitem")).toHaveCount(2);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "test-results/reveal-organizer-phone.png", fullPage: true });

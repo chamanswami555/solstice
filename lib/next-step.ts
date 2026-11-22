@@ -5,7 +5,9 @@ import type { RoomState } from "@/lib/rooms";
 export function nextStep({ room, me, members, draw, reveal, wishes, note }: RoomState): string {
   if (draw.drawn && reveal.step > 0) {
     if (reveal.step === reveal.total) return "The reveal is over. Scroll down to see the ring.";
-    const out = `Pair ${reveal.step} of ${reveal.total} is out.`;
+    // The newest pair is public now. Naming it here gives a screen reader the names: this line is a live status.
+    const shown = reveal.pairs[reveal.pairs.length - 1];
+    const out = shown ? `Pair ${reveal.step} of ${reveal.total}: ${shown.giverName} gave to ${shown.receiverName}.` : `Pair ${reveal.step} of ${reveal.total} is out.`;
     return me.isOrganizer ? `${out} Tap "Reveal next" for the next pair.` : `${out} Watch for the next one.`;
   }
 

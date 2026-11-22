@@ -44,7 +44,9 @@ export function Reveal({ state, onMoved, cheer }: RevealProps) {
   useEffect(() => {
     if (reveal.step === 0 || !stage.current) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    stage.current.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+    // A person typing keeps their place; the next-step line at the top still names the new pair.
+    const typing = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
+    if (!typing) stage.current.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
     for (const animation of stage.current.getAnimations({ subtree: true })) {
       animation.cancel();
       animation.play();
