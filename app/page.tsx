@@ -14,7 +14,12 @@ export default function Home() {
           <li>The website draws the names. Ask your person anything as &quot;Your secret giver&quot;.</li>
           <li>Reveal together: every phone shows who gave to whom.</li>
         </ol>
-        <p className="notice">Got an invite link? Open it to join that room. This form makes a new room.</p>
+        <div className="form__actions">
+          <a className="btn" href="#create">
+            Start a room
+          </a>
+          <DemoStart label="Try the 3-minute demo" />
+        </div>
         <figure className="preview">
           <div className="preview__stage">
             <p className="preview__lead">The secret giver of Rohan is</p>
@@ -23,7 +28,11 @@ export default function Home() {
           <figcaption className="preview__caption">An example of the reveal. Every phone shows the same pair, live.</figcaption>
         </figure>
       </div>
-      <CreateRoomForm />
+      <div className="start__form" id="create">
+        <h2 className="panel__title">Start a Secret Santa for your group</h2>
+        <p className="notice">Got an invite link? Open it to join that room. This form makes a new room.</p>
+        <CreateRoomForm />
+      </div>
       <section className="panel" aria-labelledby="demo-start-title">
         <h2 className="panel__title" id="demo-start-title">
           Alone right now?

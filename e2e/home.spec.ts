@@ -14,7 +14,7 @@ test("the first screen shows the product name and loads with no error", async ({
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Draw names. Ask questions. Keep the secret.");
-  await expect(page).toHaveTitle("Solstice");
+  await expect(page).toHaveTitle("Solstice: a Secret Santa for your group");
   await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
   await expect(page.getByText("Got an invite link? Open it to join that room. This form makes a new room.")).toBeVisible();
   // A first-time visitor learns what this is and how it goes, before the form.
@@ -40,6 +40,9 @@ for (const size of [
     await page.setViewportSize({ width: size.width, height: size.height });
     await page.goto("/");
 
+    // The first screen offers both ways in without a scroll: start a room, or try the demo alone.
+    await expect(page.getByRole("link", { name: "Start a room" })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Try the 3-minute demo" })).toBeInViewport();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
     await page.screenshot({ path: `test-results/home-${size.name}.png`, fullPage: true });

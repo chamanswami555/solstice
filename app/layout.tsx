@@ -20,7 +20,7 @@ const SHARE_TEXT = "Draw names, ask your person questions without showing your n
 
 // The share fields give a link in a chat or a post a title, a text and the image of app/opengraph-image.tsx.
 export const metadata: Metadata = {
-  title: BRAND.name,
+  title: SHARE_TITLE,
   description: BRAND.tagline,
   openGraph: { title: SHARE_TITLE, description: SHARE_TEXT, siteName: BRAND.name, type: "website" },
   twitter: { card: "summary_large_image", title: SHARE_TITLE, description: SHARE_TEXT },

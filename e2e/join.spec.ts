@@ -49,6 +49,7 @@ test("a link to a room that does not exist says so", async ({ page }) => {
   await page.goto("/r/ZZZZZZZZ");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("This room does not exist");
+  await expect(page.getByRole("link", { name: "Start a new room" })).toHaveAttribute("href", "/");
 });
 
 test("the join route answers a full or unknown room with one error shape", async ({ request }) => {
