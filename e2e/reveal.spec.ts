@@ -32,13 +32,29 @@ test("four people and a guest watch the reveal pair by pair and end on the ring"
     await expect(person.getByRole("heading", { name: "Pair 1 of 4" })).toBeVisible(SLOW);
     expect(await shownPair(person).innerText()).toBe(firstPair);
   }
+  await expect(shownPair(page)).toContainText("The secret giver of");
+  // The giver's name rises after a pause, and stands still for a person who asks for less motion.
+  const motion = () => page.locator(".reveal__giver").evaluate((name) => getComputedStyle(name).animationName);
+  expect(await motion()).toBe("reveal-rise");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(await motion()).toBe("none");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("section").filter({ has: page.getByRole("heading", { name: "Pair 1 of 4" }) }).screenshot({ path: "test-results/reveal-stage-phone.png" });
+  await page.emulateMedia({ reducedMotion: null });
   await members[1].setViewportSize({ width: 390, height: 844 });
   await members[1].screenshot({ path: "test-results/reveal-pair-phone.png", fullPage: true });
 
+  // A member who scrolled down is brought back to the reveal by the next pair.
+  await members[1].evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(members[1].locator(".reveal__pair")).not.toBeInViewport();
   for (const step of [2, 3]) {
     await page.getByRole("button", { name: "Reveal next" }).click();
     await expect(page.getByRole("heading", { name: `Pair ${step} of 4` })).toBeVisible();
+    // The motion plays again for each pair: its clock is still inside the 1.8 seconds of the giver's rise.
+    expect(await page.locator(".reveal__giver").evaluate((name) => Number(name.getAnimations()[0]?.currentTime ?? 1e9))).toBeLessThan(1800);
   }
+  await expect(members[1].getByRole("heading", { name: "Pair 3 of 4" })).toBeVisible(SLOW);
+  await expect(members[1].locator(".reveal__pair")).toBeInViewport();
   await expect(page.getByRole("list", { name: "Pairs shown before" }).getByRole("listitem")).toHaveCount(2);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "test-results/reveal-organizer-phone.png", fullPage: true });

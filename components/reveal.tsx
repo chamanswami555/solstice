@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NoteText } from "@/components/gift-note";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
@@ -37,7 +37,19 @@ export function Reveal({ state, onMoved, cheer }: RevealProps) {
   const [asking, setAsking] = useState(false);
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const stage = useRef<HTMLElement>(null);
   const { room, me, reveal, note } = state;
+
+  // A new pair brings every screen to the reveal, wherever the person had scrolled, and plays the reveal motion again.
+  useEffect(() => {
+    if (reveal.step === 0 || !stage.current) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    stage.current.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+    for (const animation of stage.current.getAnimations({ subtree: true })) {
+      animation.cancel();
+      animation.play();
+    }
+  }, [reveal.step]);
   // In a tonight round each pair comes with the giver's note, or with the words for a missing one.
   const noteOf = (pair: { note: string | null }) =>
     room.kind === "december" ? null : pair.note ? <NoteText text={pair.note} /> : "No note yet";
@@ -143,16 +155,20 @@ export function Reveal({ state, onMoved, cheer }: RevealProps) {
 
   const latest = reveal.pairs[reveal.pairs.length - 1];
   return (
-    <section className="panel panel--lit" aria-labelledby="reveal-title">
+    <section className="panel panel--lit" aria-labelledby="reveal-title" ref={stage}>
       <h2 className="panel__title" id="reveal-title">
         Pair {reveal.step} of {reveal.total}
       </h2>
-      <p className="reveal__pair" aria-live="polite">
-        <span className="drawcard__name">{latest.giverName}</span>
-        <span className="reveal__verb">gives to</span>
-        <span className="drawcard__name">{latest.receiverName}</span>
-      </p>
-      {noteOf(latest) && <p className="reveal__note">{noteOf(latest)}</p>}
+      {/* The reveal motion: first the receiver, then the giver, then the note. */}
+      <div className="reveal__pair" aria-live="polite">
+        <p className="reveal__lead">The secret giver of {latest.receiverName} is</p>
+        <p className="drawcard__name reveal__giver">{latest.giverName}</p>
+      </div>
+      {noteOf(latest) && (
+        <p className="reveal__note reveal__later">
+          {noteOf(latest)}
+        </p>
+      )}
       <Cheers key={reveal.step} cheer={cheer} />
       {controls}
       {problem && <Notice tone="error">{problem}</Notice>}
