@@ -110,3 +110,9 @@ body { display: flex; flex-direction: column; min-height: 100dvh; background-rep
 .talk__name { font-size: var(--text-sm); color: var(--color-muted); }
 .talk__text { overflow-wrap: anywhere; }
 .confirm__actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.form__actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.nextstep { margin: 0; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-input); background-color: var(--color-lit); color: var(--color-ink); font-weight: 600; }
+.fold { display: grid; gap: var(--space-sm); }
+.fold__summary { cursor: pointer; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-input); background-color: var(--color-paper-3); color: var(--color-ink); font-weight: 600; }
+.fold__summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.fold__body { display: grid; gap: var(--space-lg); padding-top: var(--space-sm); }

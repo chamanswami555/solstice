@@ -8,8 +8,8 @@ import type { RoomState } from "@/lib/rooms";
 
 type WishesProps = { state: RoomState };
 
-/** One text field for each possible wish, filled with the saved ones first. */
-const fields = (saved: readonly string[]) => Array.from({ length: LIMITS.wishesMax }, (_, index) => saved[index] ?? "");
+/** One text field for each saved wish, and one empty field when there is none. More fields come with "Add another wish". */
+const fields = (saved: readonly string[]) => (saved.length > 0 ? [...saved] : [""]);
 
 /** The member's own wish list. Only the secret giver sees it, after the draw. A guest has none. */
 export function Wishes({ state }: WishesProps) {
@@ -95,7 +95,20 @@ export function Wishes({ state }: WishesProps) {
             />
           </div>
         ))}
-        <div>
+        <div className="form__actions">
+          {draft.length < LIMITS.wishesMax && (
+            <Button
+              type="button"
+              variant="quiet"
+              onClick={() => {
+                setDraft([...draft, ""]);
+                // The new field gets the focus after it renders.
+                requestAnimationFrame(() => document.getElementById(`${id}-${draft.length}`)?.focus());
+              }}
+            >
+              Add another wish
+            </Button>
+          )}
           <Button type="submit" variant="quiet" loading={sending}>
             Save wishes
           </Button>

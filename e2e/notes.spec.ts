@@ -18,10 +18,10 @@ test("givers write gift notes in a tonight round and the reveal shows them", asy
   await expect(rohan.getByRole("heading", { name: `Your gift note for ${receiverOf.Rohan}` })).toBeVisible();
   await rohan.getByRole("textbox", { name: "Gift note", exact: true }).fill("Coffee is on me tomorrow.");
   await rohan.getByRole("button", { name: "Save note" }).click();
-  await expect(rohan.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(rohan.getByRole("status").filter({ hasText: /^Saved\.$/ })).toBeVisible();
   await pages.Meera.getByRole("textbox", { name: "Gift note", exact: true }).fill("https://example.com/a-song-for-you");
   await pages.Meera.getByRole("button", { name: "Save note" }).click();
-  await expect(pages.Meera.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(pages.Meera.getByRole("status").filter({ hasText: /^Saved\.$/ })).toBeVisible();
   await rohan.setViewportSize({ width: 390, height: 844 });
   await rohan.screenshot({ path: "test-results/note-phone.png", fullPage: true });
 

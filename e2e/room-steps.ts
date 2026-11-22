@@ -23,6 +23,9 @@ export async function join(browser: Browser, invite: string, displayName: string
   await page.goto(invite);
   await page.getByLabel("Your display name").fill(displayName);
   await page.getByRole("button", { name: "Join room" }).click();
+  await expect(page.locator(".nextstep")).toBeVisible();
+  // A guest joins after the draw, when the member list is in the fold at the end.
+  if (await page.locator(".fold__summary").count()) await page.locator(".fold__summary").click();
   await expect(page.getByRole("listitem").filter({ hasText: displayName })).toContainText("you");
   return page;
 }

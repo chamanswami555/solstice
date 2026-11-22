@@ -12,9 +12,14 @@ test("a member writes wishes, and only the secret giver sees them after the draw
 
   await expect(rohan.getByText("Write up to 5 wishes. After the draw, only your secret giver sees them.")).toBeVisible();
   await rohan.getByLabel("Wish 1").fill("A warm scarf");
+  // One field at first; a second empty field is dropped at the save.
+  await expect(rohan.getByLabel("Wish 2")).toHaveCount(0);
+  await rohan.getByRole("button", { name: "Add another wish" }).click();
+  await expect(rohan.getByLabel("Wish 2")).toBeFocused();
+  await rohan.getByRole("button", { name: "Add another wish" }).click();
   await rohan.getByLabel("Wish 3").fill("  Filter coffee beans ");
   await rohan.getByRole("button", { name: "Save wishes" }).click();
-  await expect(rohan.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(rohan.getByRole("status").filter({ hasText: /^Saved\.$/ })).toBeVisible();
   // The empty field between the two is dropped, and the list survives a reload.
   await rohan.reload();
   await expect(rohan.getByLabel("Wish 1")).toHaveValue("A warm scarf");
@@ -38,7 +43,8 @@ test("a member writes wishes, and only the secret giver sees them after the draw
   await giver!.setViewportSize({ width: 390, height: 844 });
   await giver!.screenshot({ path: "test-results/wishes-giver-phone.png", fullPage: true });
 
-  // A change after the draw reaches the giver.
+  // A change after the draw reaches the giver. After the draw the wish list is in the fold at the end.
+  await rohan.locator(".fold__summary").click();
   await rohan.getByLabel("Wish 2").fill("A board game");
   await rohan.getByRole("button", { name: "Save wishes" }).click();
   await expect(giver!.locator(".drawcard .wishlist li")).toHaveText(["A warm scarf", "A board game"], SLOW);

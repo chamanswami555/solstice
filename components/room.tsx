@@ -7,6 +7,7 @@ import { DemoBanner } from "@/components/demo-banner";
 import { DrawPanel } from "@/components/draw-panel";
 import { GiftNote } from "@/components/gift-note";
 import { JoinForm } from "@/components/join-form";
+import { nextStep } from "@/lib/next-step";
 import { MaskThreads } from "@/components/mask-thread";
 import { Nudge } from "@/components/nudge";
 import { MemberList } from "@/components/member-list";
@@ -157,6 +158,20 @@ export function Room() {
         </div>
       </section>
   );
+  const invitePanel = room.kind !== "demo" && (
+    <section className="panel" aria-labelledby="invite-title">
+      <h2 className="panel__title" id="invite-title">
+        Invite your group
+      </h2>
+      <CopyLink label="Invite link" value={inviteLink} />
+    </section>
+  );
+  const wishesPanel = <Wishes state={view.state} />;
+  const memberList = <MemberList state={view.state} onChanged={() => void reload()} />;
+  // After the draw these matter less than the draw card and the talks, so they fold away at the end.
+  const folded = [me.role === "member" && "your wish list", "the people", room.kind !== "demo" && "the invite link"].filter(
+    (part): part is string => Boolean(part),
+  );
   // The key gives a new room its own fresh panels: a demo that starts again must not keep typed drafts.
   return (
     <div className="room" key={room.code}>
@@ -167,31 +182,36 @@ export function Room() {
           {room.budget ? `, budget ${room.budget}` : ""}
         </p>
       </div>
+      <p className="nextstep" role="status">
+        {nextStep(view.state)}
+      </p>
 
       {room.kind === "demo" && <DemoBanner demoNames={members.filter((member) => member.isDemo).map((member) => member.displayName)} />}
 
       {room.kind !== "demo" && returnPanel}
 
       {reveal.step > 0 && revealPanel}
+      {!draw.drawn && invitePanel}
       <DrawPanel state={view.state} onDrawn={() => void reload()} />
       {reveal.step === 0 && revealPanel}
       {draw.drawn && me.role === "member" && <MaskThreads code={room.code} refresh={loads} revealed={reveal.step === reveal.total} />}
-      {draw.drawn && me.role === "member" && room.kind !== "demo" && reveal.step < reveal.total && <Nudge link={inviteLink} />}
       <GiftNote state={view.state} onSaved={() => void reload()} />
-      <Wishes state={view.state} />
+      {draw.drawn && me.role === "member" && room.kind !== "demo" && reveal.step < reveal.total && <Nudge link={inviteLink} />}
+      {!draw.drawn && wishesPanel}
+      {!draw.drawn && memberList}
       <RoomTalk code={room.code} me={me} members={members} onSignal={reload} onCheer={onCheer} onCheerReady={onCheerReady} />
       {room.kind === "demo" && returnPanel}
 
-      {room.kind !== "demo" && (
-        <section className="panel" aria-labelledby="invite-title">
-          <h2 className="panel__title" id="invite-title">
-            Invite your group
-          </h2>
-          <CopyLink label="Invite link" value={inviteLink} />
-        </section>
+      {draw.drawn && (
+        <details className="fold">
+          <summary className="fold__summary">Show {new Intl.ListFormat("en", { type: "conjunction" }).format(folded)}</summary>
+          <div className="fold__body">
+            {wishesPanel}
+            {invitePanel}
+            {memberList}
+          </div>
+        </details>
       )}
-
-      <MemberList state={view.state} onChanged={() => void reload()} />
     </div>
   );
 }
